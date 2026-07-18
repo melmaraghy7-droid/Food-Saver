@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.env
+.DS_Store
+Thumbs.db
+data/donations.json
+data/messages.json
+data/notifications.json
+data/reports.json

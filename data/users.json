@@ -1,0 +1,47 @@
+[
+  {
+    "id": "usr_747scdok3",
+    "fullName": "Carlos Diaz",
+    "email": "volunteer_w3iyl@test.com",
+    "mobileNumber": "051234567",
+    "role": "Volunteer",
+    "passwordHash": "$2a$10$n0hrKagCrISjqjWhEcMPO.3K1l8A2Hva8EuAU4qbUA/I2zQq7A/De",
+    "createdAt": "2026-07-18T14:15:47.733Z"
+  },
+  {
+    "id": "usr_lxf8s68q8",
+    "fullName": "Carlos Diaz",
+    "email": "volunteer_pz6bd@test.com",
+    "mobileNumber": "051234567",
+    "role": "Volunteer",
+    "passwordHash": "$2a$10$6hVnLjwx9FBaR.VXKoda6efVmqeAnyUplL1Pl.DPEVqXm9f8EXRWW",
+    "createdAt": "2026-07-18T14:19:05.269Z"
+  },
+  {
+    "id": "usr_upkpghfcc",
+    "fullName": "Carlos Diaz",
+    "email": "volunteer_crqar@test.com",
+    "mobileNumber": "051234567",
+    "role": "Volunteer",
+    "passwordHash": "$2a$10$ysK7X/SWxcDCJVFHe4ZMou/q5hhKLC95h7Itmo3YNmnWPpHJx0.bi",
+    "createdAt": "2026-07-18T14:56:42.458Z"
+  },
+  {
+    "id": "usr_bu6ei4f4m",
+    "fullName": "Carlos Diaz",
+    "email": "volunteer_k246w@test.com",
+    "mobileNumber": "051234567",
+    "role": "Volunteer",
+    "passwordHash": "$2a$10$L0oSu9aNekXvAjqjZriN3uYSIKwRLVaS4S9OYe6DmPkratyyulIx2",
+    "createdAt": "2026-07-18T14:59:30.502Z"
+  },
+  {
+    "id": "usr_hp61ctx8i",
+    "fullName": "Lili",
+    "email": "bakery@gmail.com",
+    "mobileNumber": "12345665432",
+    "role": "Bakery",
+    "passwordHash": "$2a$10$l..Ytnjb/ai8.E3zQXlO3O9045zEwI/UGSJhHuosqDZbGVVI3OkuK",
+    "createdAt": "2026-07-18T15:03:30.169Z"
+  }
+]

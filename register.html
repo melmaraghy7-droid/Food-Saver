@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FoodSaver — Register</title>
+  <link rel="stylesheet" href="./style.css">
+  <style>
+    .auth-wrapper {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 1rem;
+      background: radial-gradient(circle at 10% 20%, var(--bg-secondary) 0%, var(--bg-primary) 90%);
+    }
+
+    .auth-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-lg);
+      padding: 3rem 2.5rem;
+      width: 100%;
+      max-width: 650px;
+      box-shadow: var(--shadow-lg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      position: relative;
+    }
+
+    .auth-header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .auth-logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--brand-primary);
+      margin-bottom: 1rem;
+    }
+
+    .auth-logo svg {
+      width: 38px;
+      height: 38px;
+      fill: var(--brand-primary);
+    }
+
+    .auth-header h2 {
+      font-size: 1.85rem;
+      color: var(--text-primary);
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+      font-size: 0.95rem;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 0.85rem 1.25rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-md);
+      background-color: rgba(255, 255, 255, 0.5);
+      color: var(--text-primary);
+      font-family: inherit;
+      outline: none;
+      transition: all var(--transition-fast);
+    }
+
+    html.dark .form-input {
+      background-color: rgba(18, 24, 16, 0.5);
+    }
+
+    .form-input:focus {
+      border-color: var(--brand-primary);
+      box-shadow: 0 0 10px rgba(117, 201, 127, 0.2);
+      background-color: white;
+    }
+
+    html.dark .form-input:focus {
+      background-color: var(--bg-secondary);
+    }
+
+    /* Role Cards Selection Grid */
+    .role-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .role-card {
+      background: var(--bg-card);
+      border: 2px solid var(--border-color);
+      border-radius: var(--border-radius-md);
+      padding: 1.25rem 0.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all var(--transition-normal);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .role-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--brand-primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .role-card.selected {
+      border-color: var(--brand-primary);
+      background: rgba(117, 201, 127, 0.15);
+      box-shadow: 0 0 15px rgba(117, 201, 127, 0.2);
+    }
+
+    .role-card svg {
+      width: 28px;
+      height: 28px;
+      color: var(--brand-primary);
+    }
+
+    .role-card span {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* Error and Success Display */
+    .alert {
+      padding: 1rem;
+      border-radius: var(--border-radius-md);
+      margin-bottom: 1.5rem;
+      font-weight: 500;
+      display: none;
+      font-size: 0.9rem;
+    }
+
+    .alert-error {
+      background-color: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+    }
+
+    html.dark .alert-error {
+      background-color: #450a0a;
+      color: #fca5a5;
+      border-color: #7f1d1d;
+    }
+
+    .alert-success {
+      background-color: #d1fae5;
+      color: #065f46;
+      border: 1px solid #6ee7b7;
+    }
+
+    html.dark .alert-success {
+      background-color: #064e3b;
+      color: #6ee7b7;
+      border-color: #047857;
+    }
+
+    .auth-footer {
+      text-align: center;
+      margin-top: 2rem;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+
+    .auth-footer a {
+      color: var(--brand-primary);
+      font-weight: 600;
+    }
+
+    .auth-footer a:hover {
+      text-decoration: underline;
+    }
+
+    .floating-controls {
+      position: absolute;
+      top: 1.5rem;
+      right: 1.5rem;
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    body.lang-ar .floating-controls {
+      right: auto;
+      left: 1.5rem;
+    }
+  </style>
+</head>
+<body class="lang-en">
+
+  <div class="auth-wrapper">
+    <div class="auth-card">
+      
+      <!-- Lang / Theme Switcher in header of card -->
+      <div class="floating-controls">
+        <button class="icon-toggle" id="theme-toggle" aria-label="Toggle Dark Mode">
+          <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+        <button class="action-btn login" id="lang-toggle" style="border: 1px solid var(--border-color); padding: 0.5rem 1rem;">العربية</button>
+      </div>
+
+      <div class="auth-header">
+        <a href="/index.html" class="auth-logo">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M17 8C17 13 12 17 12 17C12 17 7 13 7 8C7 5.24 9.24 3 12 3C14.76 3 17 5.24 17 8Z"/>
+            <path d="M12 21C12 21 4 16 4 9C4 5 7 2 11 2C11 2 12 4.5 12 6"/>
+            <path d="M12 21C12 21 20 16 20 9C20 5 17 2 13 2C13 2 12 4.5 12 6" opacity="0.7"/>
+            <circle cx="12" cy="8" r="1.5" fill="#fff"/>
+          </svg>
+          <span>FoodSaver</span>
+        </a>
+        <h2 data-i18n="authRegisterTitle">Create Your FoodSaver Account</h2>
+      </div>
+
+      <!-- Alerts -->
+      <div class="alert alert-error" id="error-alert"></div>
+      <div class="alert alert-success" id="success-alert"></div>
+
+      <form id="register-form">
+        <div class="form-group">
+          <label class="form-label" data-i18n="authFullName">Full Name</label>
+          <input type="text" id="fullName" class="form-input" required placeholder="John Doe">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" data-i18n="authEmail">Email Address</label>
+          <input type="email" id="email" class="form-input" required placeholder="john@example.com">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" data-i18n="authMobile">Mobile Number</label>
+          <input type="tel" id="mobileNumber" class="form-input" required placeholder="+1 555 0199">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" data-i18n="authSelectRole">Choose Your Role</label>
+          <!-- Custom Role Grid -->
+          <div class="role-grid">
+            
+            <div class="role-card" data-role="Restaurant">
+              <!-- Restaurant Icon -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"></path>
+                <path d="M7 2v4"></path>
+                <path d="M21 15V2v0a5 5 0 0 0-5 5v3c0 1.1.9 2 2 2h3"></path>
+                <path d="M12 11v10h1v-10"></path>
+                <path d="M18 12v9h1v-9"></path>
+                <path d="M6 12v9h1v-9"></path>
+              </svg>
+              <span>Restaurant</span>
+            </div>
+
+            <div class="role-card" data-role="Supermarket">
+              <!-- Supermarket Cart Icon -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="9" cy="21" r="1"></circle>
+                <circle cx="20" cy="21" r="1"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+              </svg>
+              <span>Supermarket</span>
+            </div>
+
+            <div class="role-card" data-role="Bakery">
+              <!-- Bread/Bakery Icon -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                <path d="M12 5 L12 19"></path>
+                <path d="M6 12 L18 12"></path>
+              </svg>
+              <span>Bakery</span>
+            </div>
+
+            <div class="role-card" data-role="Charity">
+              <!-- Charity Heart Icon -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+              </svg>
+              <span>Charity</span>
+            </div>
+
+            <div class="role-card" data-role="Volunteer">
+              <!-- Volunteer Bike Icon -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                <circle cx="18.5" cy="18.5" r="2.5"></circle>
+                <path d="M15 6h5v2h-5z"></path>
+                <path d="M8 17h10L14 8H7z"></path>
+              </svg>
+              <span>Volunteer</span>
+            </div>
+
+          </div>
+          <!-- Hidden input holding role value -->
+          <input type="hidden" id="role" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" data-i18n="authPassword">Password</label>
+          <input type="password" id="password" class="form-input" required placeholder="••••••">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" data-i18n="authConfirmPassword">Confirm Password</label>
+          <input type="password" id="confirmPassword" class="form-input" required placeholder="••••••">
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 1rem;" data-i18n="authBtnRegister">Create Account</button>
+      </form>
+
+      <div class="auth-footer">
+        <a href="/login.html" data-i18n="authHaveAccount">Already have an account? Login here</a>
+      </div>
+
+    </div>
+  </div>
+
+  <script type="module">
+    import { translations } from './translations.js';
+
+    let currentLang = localStorage.getItem('foodsaver_lang') || 'en';
+    let currentTheme = localStorage.getItem('foodsaver_theme') || 'light';
+
+    // Theme Switcher Setup
+    const htmlElement = document.documentElement;
+    const bodyElement = document.body;
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const langToggleBtn = document.getElementById('lang-toggle');
+
+    function applyTheme() {
+      if (currentTheme === 'dark') {
+        htmlElement.classList.add('dark');
+        themeToggleBtn.querySelector('.sun-icon').style.display = 'block';
+        themeToggleBtn.querySelector('.moon-icon').style.display = 'none';
+      } else {
+        htmlElement.classList.remove('dark');
+        themeToggleBtn.querySelector('.sun-icon').style.display = 'none';
+        themeToggleBtn.querySelector('.moon-icon').style.display = 'block';
+      }
+    }
+
+    themeToggleBtn.addEventListener('click', () => {
+      currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+      localStorage.setItem('foodsaver_theme', currentTheme);
+      applyTheme();
+    });
+
+    // Language Switcher Setup
+    function applyLanguage(lang) {
+      if (lang === 'ar') {
+        bodyElement.setAttribute('dir', 'rtl');
+        bodyElement.classList.remove('lang-en');
+        bodyElement.classList.add('lang-ar');
+        langToggleBtn.textContent = 'English';
+      } else {
+        bodyElement.setAttribute('dir', 'ltr');
+        bodyElement.classList.remove('lang-ar');
+        bodyElement.classList.add('lang-en');
+        langToggleBtn.textContent = 'العربية';
+      }
+
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (translations[lang] && translations[lang][key]) {
+          el.textContent = translations[lang][key];
+        }
+      });
+      
+      // Update specific placeholders
+      document.getElementById('fullName').placeholder = lang === 'ar' ? 'أحمد محمد' : 'John Doe';
+      document.getElementById('email').placeholder = lang === 'ar' ? 'example@mail.com' : 'john@example.com';
+      document.getElementById('mobileNumber').placeholder = lang === 'ar' ? '٠٥١٢٣٤٥٦٧' : '+1 555 0199';
+    }
+
+    langToggleBtn.addEventListener('click', () => {
+      currentLang = currentLang === 'en' ? 'ar' : 'en';
+      localStorage.setItem('foodsaver_lang', currentLang);
+      applyLanguage(currentLang);
+    });
+
+    // Initial setups
+    applyTheme();
+    applyLanguage(currentLang);
+
+    // Role selection click handler
+    const roleCards = document.querySelectorAll('.role-card');
+    const roleInput = document.getElementById('role');
+
+    roleCards.forEach(card => {
+      card.addEventListener('click', () => {
+        // Clear selection on other cards
+        roleCards.forEach(c => c.classList.remove('selected'));
+        // Select clicked card
+        card.classList.add('selected');
+        roleInput.value = card.getAttribute('data-role');
+      });
+    });
+
+    // Form submission API handler
+    const registerForm = document.getElementById('register-form');
+    const errorAlert = document.getElementById('error-alert');
+    const successAlert = document.getElementById('success-alert');
+
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorAlert.style.display = 'none';
+      successAlert.style.display = 'none';
+
+      const fullName = document.getElementById('fullName').value;
+      const email = document.getElementById('email').value;
+      const mobileNumber = document.getElementById('mobileNumber').value;
+      const role = roleInput.value;
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      // Front-end validation checks
+      if (!role) {
+        errorAlert.textContent = currentLang === 'ar' ? 'يرجى اختيار دورك الوظيفي أولاً.' : 'Please select your role first.';
+        errorAlert.style.display = 'block';
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        errorAlert.textContent = currentLang === 'ar' ? 'كلمات المرور غير متطابقة.' : 'Passwords do not match.';
+        errorAlert.style.display = 'block';
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ fullName, email, mobileNumber, password, confirmPassword, role })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Registration failed');
+        }
+
+        // Show Success
+        successAlert.textContent = currentLang === 'ar' ? 'تم إنشاء الحساب بنجاح! جاري توجيهك لصفحة تسجيل الدخول...' : 'Registration successful! Redirecting to login...';
+        successAlert.style.display = 'block';
+        
+        setTimeout(() => {
+          window.location.href = '/login.html';
+        }, 2000);
+
+      } catch (err) {
+        errorAlert.textContent = err.message;
+        errorAlert.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>

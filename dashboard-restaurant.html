@@ -1,0 +1,2077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FoodSaver — Donor Dashboard</title>
+  <link rel="stylesheet" href="./style.css">
+  <!-- Chart.js CDN for interactive charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --sidebar-width: 280px;
+      --sidebar-collapsed-width: 78px;
+    }
+
+    body {
+      overflow-x: hidden;
+    }
+
+    .dashboard-layout {
+      display: flex;
+      min-height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Sidebar Styles */
+    .sidebar {
+      width: var(--sidebar-width);
+      background-color: var(--bg-secondary);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 2rem 1.25rem;
+      flex-shrink: 0;
+      transition: width var(--transition-normal), padding var(--transition-normal);
+      z-index: 100;
+    }
+
+    body.lang-ar .sidebar {
+      border-right: none;
+      border-left: 1px solid var(--border-color);
+    }
+
+    .sidebar.collapsed {
+      width: var(--sidebar-collapsed-width);
+      padding: 2rem 0.5rem;
+    }
+
+    .sidebar-top {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 0.5rem;
+    }
+
+    .logo-text {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--brand-primary);
+      transition: opacity var(--transition-fast);
+    }
+
+    .sidebar.collapsed .logo-text {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      overflow: hidden;
+    }
+
+    .collapse-trigger {
+      background: none;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition-fast);
+      cursor: pointer;
+    }
+
+    .collapse-trigger:hover {
+      color: var(--brand-primary);
+      border-color: var(--brand-primary);
+      transform: scale(1.05);
+    }
+
+    .sidebar.collapsed .collapse-trigger {
+      transform: rotate(180deg);
+      margin: 0 auto;
+    }
+
+    body.lang-ar .sidebar.collapsed .collapse-trigger {
+      transform: rotate(-180deg);
+    }
+
+    .sidebar-menu {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .sidebar-menu-btn {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      border-radius: var(--border-radius-md);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      transition: all var(--transition-fast);
+      text-align: start;
+    }
+
+    .sidebar-menu-btn:hover, .sidebar-menu-btn.active {
+      background-color: var(--border-color);
+      color: var(--brand-primary);
+    }
+
+    .sidebar-menu-btn span {
+      transition: opacity var(--transition-fast);
+      white-space: nowrap;
+    }
+
+    .sidebar.collapsed .sidebar-menu-btn {
+      justify-content: center;
+      padding: 0.8rem 0;
+    }
+
+    .sidebar.collapsed .sidebar-menu-btn span {
+      opacity: 0;
+      width: 0;
+      display: none;
+    }
+
+    .sidebar-menu-btn svg {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    /* Main Container Styles */
+    .main-container {
+      flex-grow: 1;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Top Nav Bar Styles */
+    .top-nav {
+      height: 70px;
+      background-color: var(--bg-nav);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 2rem;
+      flex-shrink: 0;
+    }
+
+    .top-nav-left {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .breadcrumbs {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .breadcrumbs span.separator {
+      opacity: 0.5;
+    }
+
+    .breadcrumbs span.active-tab {
+      color: var(--brand-primary);
+      font-weight: 700;
+    }
+
+    .search-bar-container {
+      position: relative;
+      width: 240px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 0.5rem 1rem 0.5rem 2.25rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-full);
+      background-color: rgba(255, 255, 255, 0.4);
+      color: var(--text-primary);
+      font-size: 0.85rem;
+      outline: none;
+      transition: all var(--transition-fast);
+    }
+
+    body.lang-ar .search-input {
+      padding: 0.5rem 2.25rem 0.5rem 1rem;
+    }
+
+    .search-input:focus {
+      width: 280px;
+      border-color: var(--brand-primary);
+      background-color: white;
+    }
+
+    html.dark .search-input:focus {
+      background-color: var(--bg-secondary);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 0.85rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 14px;
+      height: 14px;
+      color: var(--text-secondary);
+    }
+
+    body.lang-ar .search-icon {
+      left: auto;
+      right: 0.85rem;
+    }
+
+    .top-nav-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .nav-icon-btn {
+      position: relative;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition-fast);
+      cursor: pointer;
+    }
+
+    .nav-icon-btn:hover {
+      color: var(--brand-primary);
+      border-color: var(--brand-primary);
+    }
+
+    .nav-icon-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .notification-badge {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #ef4444;
+    }
+
+    /* Main Content Area */
+    .main-content {
+      flex-grow: 1;
+      padding: 2.5rem;
+      overflow-y: auto;
+      background-color: var(--bg-primary);
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+    }
+
+    /* Tab Switcher Elements */
+    .tab-pane {
+      display: none;
+      animation: fadeIn 0.4s ease;
+      flex-direction: column;
+      gap: 2.5rem;
+    }
+
+    .tab-pane.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Counter Cards Grid */
+    .widgets-grid-large {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .widget-card-sm {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-md);
+      padding: 1.5rem 1.25rem;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      transition: all var(--transition-normal);
+    }
+
+    .widget-card-sm:hover {
+      transform: translateY(-2px);
+      border-color: var(--brand-primary);
+      box-shadow: var(--shadow-md);
+    }
+
+    .widget-card-sm-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .widget-card-sm-val {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--brand-primary);
+    }
+
+    /* Charts Layout Grid */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1.8fr 1.2fr;
+      gap: 1.75rem;
+    }
+
+    .chart-container-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-lg);
+      padding: 2rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .chart-container-card h3 {
+      font-size: 1.15rem;
+      margin-bottom: 1.5rem;
+      color: var(--text-primary);
+    }
+
+    .chart-canvas-wrapper {
+      position: relative;
+      width: 100%;
+      height: 280px;
+    }
+
+    /* Alert Boxes */
+    .alert {
+      padding: 1rem;
+      border-radius: var(--border-radius-md);
+      margin-bottom: 1.5rem;
+      font-weight: 500;
+      display: none;
+      font-size: 0.9rem;
+    }
+
+    .alert-error {
+      background-color: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+    }
+
+    .alert-success {
+      background-color: #d1fae5;
+      color: #065f46;
+      border: 1px solid #6ee7b7;
+    }
+
+    /* Form Styles */
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+      font-size: 0.95rem;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 0.85rem 1.25rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-md);
+      background-color: rgba(255, 255, 255, 0.5);
+      color: var(--text-primary);
+      font-family: inherit;
+      outline: none;
+      transition: all var(--transition-fast);
+    }
+
+    html.dark .form-input {
+      background-color: rgba(18, 24, 16, 0.5);
+    }
+
+    .form-input:focus {
+      border-color: var(--brand-primary);
+      box-shadow: 0 0 10px rgba(117, 201, 127, 0.2);
+      background-color: white;
+    }
+
+    html.dark .form-input:focus {
+      background-color: var(--bg-secondary);
+    }
+
+    /* Cards Grid for My Donations */
+    .donations-card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .donation-item-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      transition: all var(--transition-normal);
+    }
+
+    .donation-item-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--brand-primary);
+    }
+
+    .donation-img-placeholder {
+      width: 100%;
+      height: 180px;
+      background: radial-gradient(circle, var(--bg-secondary) 0%, var(--accent-highlight) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--brand-primary);
+      position: relative;
+    }
+
+    .donation-img-placeholder svg {
+      width: 48px;
+      height: 48px;
+    }
+
+    .donation-card-content {
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      flex-grow: 1;
+    }
+
+    .donation-card-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .donation-card-meta {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    /* Map simulation visualizer box */
+    .mock-map-visualizer {
+      width: 100%;
+      height: 250px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-md);
+      background-color: #e5e7eb;
+      position: relative;
+      overflow: hidden;
+    }
+
+    html.dark .mock-map-visualizer {
+      background-color: #1f2937;
+    }
+
+    .road-line {
+      position: absolute;
+      border: 4px dashed #9ca3af;
+    }
+
+    .road-horizontal {
+      width: 100%;
+      height: 0;
+      top: 50%;
+    }
+
+    .road-vertical {
+      width: 0;
+      height: 100%;
+      left: 50%;
+    }
+
+    .marker-courier {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      background-color: var(--brand-primary);
+      border: 3px solid white;
+      border-radius: 50%;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+      z-index: 5;
+      animation: courierDrive 6s linear infinite;
+    }
+
+    @keyframes courierDrive {
+      0% { top: 10%; left: 50%; }
+      50% { top: 50%; left: 50%; }
+      100% { top: 50%; left: 90%; }
+    }
+
+    /* Private Chat Panel Layout */
+    .chat-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      height: 500px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-lg);
+      overflow: hidden;
+      background: var(--bg-card);
+    }
+
+    .chat-sidebar {
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      background-color: var(--bg-secondary);
+    }
+
+    body.lang-ar .chat-sidebar {
+      border-right: none;
+      border-left: 1px solid var(--border-color);
+    }
+
+    .chat-contacts-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .chat-contact-item {
+      padding: 1.25rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--text-secondary);
+      transition: all var(--transition-fast);
+    }
+
+    .chat-contact-item:hover, .chat-contact-item.active {
+      background-color: var(--border-color);
+      color: var(--brand-primary);
+    }
+
+    .chat-area {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .chat-history {
+      flex-grow: 1;
+      padding: 1.5rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .chat-bubble {
+      max-width: 70%;
+      padding: 0.85rem 1.25rem;
+      border-radius: var(--border-radius-md);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .chat-bubble.sent {
+      align-self: flex-end;
+      background-color: var(--brand-primary);
+      color: white;
+    }
+
+    .chat-bubble.received {
+      align-self: flex-start;
+      background-color: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+
+    .chat-input-area {
+      padding: 1rem;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .header-user-badge {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 0.5rem 1.25rem;
+      border-radius: var(--border-radius-full);
+    }
+
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background-color: var(--brand-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+    }
+
+    .user-details h4 {
+      font-size: 0.95rem;
+      margin-bottom: 0.05rem;
+    }
+
+    .user-details p {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .controls-wrapper {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    /* Notification Drawer Slide Panel Toggle */
+    .notification-drawer {
+      position: fixed;
+      top: 70px;
+      right: -320px;
+      width: 320px;
+      height: calc(100vh - 70px);
+      background-color: var(--bg-card);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border-left: 1px solid var(--border-color);
+      box-shadow: -5px 0 15px rgba(0, 0, 0, 0.05);
+      padding: 2rem 1.5rem;
+      z-index: 95;
+      transition: right var(--transition-normal);
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    body.lang-ar .notification-drawer {
+      right: auto;
+      left: -320px;
+      border-left: none;
+      border-right: 1px solid var(--border-color);
+      box-shadow: 5px 0 15px rgba(0, 0, 0, 0.05);
+      transition: left var(--transition-normal);
+    }
+
+    .notification-drawer.active {
+      right: 0;
+    }
+
+    body.lang-ar .notification-drawer.active {
+      left: 0;
+    }
+
+    .drawer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 1rem;
+    }
+
+    .drawer-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    .drawer-close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .drawer-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      overflow-y: auto;
+      flex-grow: 1;
+    }
+
+    .drawer-item {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      padding: 1rem;
+      border-radius: var(--border-radius-md);
+      font-size: 0.85rem;
+      transition: all var(--transition-fast);
+    }
+
+    .drawer-item-title {
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .drawer-item-time {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    @media (max-width: 900px) {
+      .dashboard-layout {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+      }
+      .main-container {
+        height: auto;
+      }
+      .chat-layout {
+        grid-template-columns: 1fr;
+      }
+      .chat-sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+      }
+    }
+  </style>
+</head>
+<body class="lang-en">
+
+  <div class="dashboard-layout">
+    
+    <!-- Sidebar Navigation Drawer -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-top">
+        <div class="logo-container">
+          <a href="/index.html" class="logo">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M17 8C17 13 12 17 12 17C12 17 7 13 7 8C7 5.24 9.24 3 12 3C14.76 3 17 5.24 17 8Z"/>
+              <path d="M12 21C12 21 4 16 4 9C4 5 7 2 11 2C11 2 12 4.5 12 6"/>
+              <path d="M12 21C12 21 20 16 20 9C20 5 17 2 13 2C13 2 12 4.5 12 6" opacity="0.7"/>
+              <circle cx="12" cy="8" r="1.5" fill="#fff"/>
+            </svg>
+            <span class="logo-text">FoodSaver</span>
+          </a>
+          <button class="collapse-trigger" id="sidebar-collapse-btn" aria-label="Collapse Menu">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+        </div>
+
+        <ul class="sidebar-menu">
+          <li>
+            <button class="sidebar-menu-btn active" data-tab="tab-overview">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="9"></rect>
+                <rect x="14" y="3" width="7" height="5"></rect>
+                <rect x="14" y="12" width="7" height="9"></rect>
+                <rect x="3" y="16" width="7" height="5"></rect>
+              </svg>
+              <span data-i18n="donorNavDashboard">Dashboard Overview</span>
+            </button>
+          </li>
+          <li>
+            <button class="sidebar-menu-btn" data-tab="tab-add-donation">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="16"></line>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
+              </svg>
+              <span data-i18n="donorNavAdd">Add Donation</span>
+            </button>
+          </li>
+          <li>
+            <button class="sidebar-menu-btn" data-tab="tab-my-donations">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="9" y1="3" x2="9" y2="21"></line>
+              </svg>
+              <span data-i18n="donorNavMy">My Donations</span>
+            </button>
+          </li>
+          <li>
+            <button class="sidebar-menu-btn" data-tab="tab-requests">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+              </svg>
+              <span data-i18n="donorNavRequests">Donation Requests</span>
+            </button>
+          </li>
+          <li>
+            <button class="sidebar-menu-btn" data-tab="tab-delivery">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="1" y="3" width="15" height="13"></rect>
+                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                <circle cx="18.5" cy="18.5" r="2.5"></circle>
+              </svg>
+              <span data-i18n="donorNavDelivery">Delivery Tracking</span>
+            </button>
+          </li>
+          <li>
+            <button class="sidebar-menu-btn" data-tab="tab-analytics">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+              </svg>
+              <span data-i18n="donorNavAnalytics">Analytics</span>
+            </button>
+          </li>
+          <li>
+            <button class="sidebar-menu-btn" data-tab="tab-ai">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 8v4l3 3"></path>
+              </svg>
+              <span>AI Insights</span>
+            </button>
+          </li>
+          <li>
+            <button class="sidebar-menu-btn" data-tab="tab-chat">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+              <span data-i18n="donorNavChat">Private Chat</span>
+            </button>
+          </li>
+          <li>
+            <button class="sidebar-menu-btn" data-tab="tab-notifications">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+              <span data-i18n="donorNavNotifications">Notifications</span>
+            </button>
+          </li>
+          <li>
+            <button class="sidebar-menu-btn" data-tab="tab-reports">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              </svg>
+              <span data-i18n="donorNavReports">Submit Report</span>
+            </button>
+          </li>
+          <li>
+            <button class="sidebar-menu-btn" data-tab="tab-profile">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              <span data-i18n="donorNavProfile">Organization Profile</span>
+            </button>
+          </li>
+          <li>
+            <button class="sidebar-menu-btn" data-tab="tab-settings">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+              <span data-i18n="donorNavSettings">System Settings</span>
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <button class="sidebar-menu-btn" id="logout-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        <span data-i18n="dashLogout">Sign Out</span>
+      </button>
+    </aside>
+
+    <!-- Main Outer Container -->
+    <div class="main-container">
+      
+      <!-- Top Navigation Bar -->
+      <nav class="top-nav">
+        <div class="top-nav-left">
+          <div class="breadcrumbs">
+            <span data-i18n="dashRestaurantTitle">Donor Control Panel</span>
+            <span class="separator">/</span>
+            <span class="active-tab" id="current-tab-breadcrumb">Dashboard Overview</span>
+          </div>
+        </div>
+
+        <div class="top-nav-right">
+          <div class="search-bar-container">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="global-search" class="search-input" placeholder="Search my listings...">
+          </div>
+
+          <!-- Alert Drawer Bell button -->
+          <button class="nav-icon-btn" id="notification-bell-btn" aria-label="Open System Alerts">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <div class="notification-badge" id="bell-badge"></div>
+          </button>
+
+          <!-- Toggle buttons -->
+          <button class="icon-toggle" id="theme-toggle" aria-label="Toggle Dark/Light theme">
+            <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+            </svg>
+            <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </button>
+          <button class="action-btn login" id="lang-toggle">العربية</button>
+
+          <div class="header-user-badge">
+            <div class="user-avatar" id="avatar-initials">D</div>
+            <div class="user-details" style="display: block;">
+              <h4 id="user-display-name">Donor Facility</h4>
+              <p id="user-display-role">Restaurant</p>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Notification Slide-out Drawer Panel -->
+      <div class="notification-drawer" id="notification-drawer">
+        <div class="drawer-header">
+          <span class="drawer-title" data-i18n="donorNavNotifications">System Notifications</span>
+          <button class="drawer-close" id="drawer-close-btn">&times;</button>
+        </div>
+        <div class="drawer-list" id="drawer-notifications-list">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </div>
+
+      <!-- Main Content Dynamic Panels -->
+      <main class="main-content">
+        
+        <!-- ========================================== -->
+        <!-- TAB 1: DASHBOARD HOME (OVERVIEW) -->
+        <!-- ========================================== -->
+        <div class="tab-pane active" id="tab-overview">
+          
+          <div class="widgets-grid-large">
+            <div class="widget-card-sm"><span class="widget-card-sm-title">Total Donations</span><span class="widget-card-sm-val" id="stat-total">0</span></div>
+            <div class="widget-card-sm"><span class="widget-card-sm-title">Active Donations</span><span class="widget-card-sm-val" id="stat-active">0</span></div>
+            <div class="widget-card-sm"><span class="widget-card-sm-title">Pending Requests</span><span class="widget-card-sm-val" id="stat-pending">0</span></div>
+            <div class="widget-card-sm"><span class="widget-card-sm-title">Completed Saved</span><span class="widget-card-sm-val" id="stat-completed">0</span></div>
+            <div class="widget-card-sm"><span class="widget-card-sm-title">Expired Donations</span><span class="widget-card-sm-val" id="stat-expired">0</span></div>
+            <div class="widget-card-sm"><span class="widget-card-sm-title">Meals Donated</span><span class="widget-card-sm-val">240</span></div>
+            <div class="widget-card-sm"><span class="widget-card-sm-title">Waste Saved (kg)</span><span class="widget-card-sm-val">120 kg</span></div>
+          </div>
+
+          <div class="charts-grid">
+            <div class="chart-container-card">
+              <h3>Monthly Donations Overview</h3>
+              <div class="chart-canvas-wrapper">
+                <canvas id="chart-monthly-donations"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-container-card">
+              <h3>Food Categories Distribution</h3>
+              <div class="chart-canvas-wrapper">
+                <canvas id="chart-categories-distribution"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="charts-grid">
+            <div class="chart-container-card" style="grid-column: span 2;">
+              <h3>Recent System Logs</h3>
+              <div class="timeline-container" id="timeline-overview">
+                <!-- Rendered dynamically -->
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 2: ADD DONATION FORM -->
+        <!-- ========================================== -->
+        <div class="tab-pane" id="tab-add-donation">
+          <div class="content-card" style="max-width: 750px;">
+            <h3 data-i18n="donorNavAdd">Add New Donation</h3>
+            
+            <div class="alert alert-error" id="form-error-alert"></div>
+            <div class="alert alert-success" id="form-success-alert"></div>
+
+            <form id="donation-form" style="display: flex; flex-direction: column; gap: 1.5rem; margin-top: 1.5rem;">
+              <div class="form-group">
+                <label class="form-label">Food Item Name</label>
+                <input type="text" id="foodName" class="form-input" required placeholder="e.g. Fresh Baguettes">
+              </div>
+
+              <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                  <label class="form-label">Food Category</label>
+                  <select id="foodCategory" class="form-input" style="background-color: var(--bg-card);" required>
+                    <option value="Bakery">Bakery</option>
+                    <option value="Produce">Fruits & Vegetables</option>
+                    <option value="Cooked Meals">Cooked Meals</option>
+                    <option value="Dairy">Dairy Products</option>
+                    <option value="Canned Goods">Canned Goods</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="form-label">Quantity / Weight</label>
+                  <input type="text" id="quantity" class="form-input" required placeholder="e.g. 3 Packs / 5 kg">
+                </div>
+              </div>
+
+              <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                  <label class="form-label">Number of Meals Supplied</label>
+                  <input type="number" id="mealsCount" class="form-input" min="1" required placeholder="e.g. 10">
+                </div>
+                <div>
+                  <label class="form-label">Upload Food Images</label>
+                  <input type="file" id="foodImages" class="form-input" multiple accept="image/*" style="padding: 0.65rem 1.25rem;">
+                </div>
+              </div>
+
+              <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div>
+                  <label class="form-label">Expiration Date</label>
+                  <input type="date" id="expiryDate" class="form-input" required>
+                </div>
+                <div>
+                  <label class="form-label">Expiration Time</label>
+                  <input type="time" id="expiryTime" class="form-input" required>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Pickup Facility Address</label>
+                <input type="text" id="pickupAddress" class="form-input" required placeholder="e.g. 123 Baker Street">
+              </div>
+
+              <!-- Google Maps Mock locator -->
+              <div class="form-group">
+                <label class="form-label">Mock Map Coordinates Picker</label>
+                <div class="mock-map-visualizer">
+                  <div class="road-line road-horizontal"></div>
+                  <div class="road-line road-vertical"></div>
+                  <div style="position: absolute; top: 40%; left: 45%; font-size:0.75rem; font-weight:700; background:var(--brand-primary); color:white; padding:0.25rem 0.5rem; border-radius:var(--border-radius-full);">Select Coordinates</div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Special Pickup Instructions</label>
+                <textarea id="pickupInstructions" class="form-input" rows="3" placeholder="e.g. Ring bell at backdoor gate."></textarea>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Pickup Time Window</label>
+                <input type="text" id="pickupWindow" class="form-input" required placeholder="e.g. 9:00 PM - 10:30 PM">
+              </div>
+
+              <div style="display: flex; gap: 1rem;">
+                <button type="submit" class="btn btn-primary" style="padding: 0.85rem 2rem;">Publish Donation</button>
+                <button type="button" class="btn btn-secondary" style="padding: 0.85rem 2rem;" id="btn-save-draft">Save Draft</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 3: MY DONATIONS -->
+        <!-- ========================================== -->
+        <div class="tab-pane" id="tab-my-donations">
+          <div class="content-card">
+            <div class="table-controls">
+              <div class="filter-group" id="my-donations-filter">
+                <button class="filter-btn active" data-filter="all">All Listings</button>
+                <button class="filter-btn" data-filter="Available">Available</button>
+                <button class="filter-btn" data-filter="Requested">Requested</button>
+                <button class="filter-btn" data-filter="Approved">Approved</button>
+                <button class="filter-btn" data-filter="Completed">Completed</button>
+                <button class="filter-btn" data-filter="Expired">Expired</button>
+              </div>
+            </div>
+
+            <!-- Donations Card Deck Grid -->
+            <div class="donations-card-grid" id="donations-list-container">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 4: DONATION REQUESTS -->
+        <!-- ========================================== -->
+        <div class="tab-pane" id="tab-requests">
+          <div class="content-card">
+            <div style="overflow-x: auto;">
+              <table class="mock-table">
+                <thead>
+                  <tr>
+                    <th>Charity Organization</th>
+                    <th>Requested Item</th>
+                    <th>Required Quantity</th>
+                    <th>Distance Away</th>
+                    <th>Request Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="requests-table-body">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 5: DELIVERY TRACKING -->
+        <!-- ========================================== -->
+        <div class="tab-pane" id="tab-delivery">
+          <div class="content-card">
+            <div style="overflow-x: auto; margin-bottom: 2rem;">
+              <table class="mock-table">
+                <thead>
+                  <tr>
+                    <th>Assigned Courier</th>
+                    <th>Recipient Charity</th>
+                    <th>Status</th>
+                    <th>Scheduled Pickup</th>
+                    <th>ETA</th>
+                    <th>Live Tracker</th>
+                  </tr>
+                </thead>
+                <tbody id="deliveries-table-body">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+            
+            <!-- Live visual mapping panel -->
+            <div id="live-route-tracker-container" style="display: none;">
+              <h3 style="font-size: 1.15rem; margin-bottom: 1rem;">Live Courier Location Maps</h3>
+              <div class="mock-map-visualizer">
+                <div class="road-line road-horizontal"></div>
+                <div class="road-line road-vertical"></div>
+                <div class="marker-courier"></div>
+              </div>
+              <div style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-secondary);">
+                <p>Courier <strong id="live-courier-name">Carlos Diaz</strong> is delivering your donation to <strong id="live-charity-name">Hope Food Bank</strong>.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 6: ANALYTICS -->
+        <!-- ========================================== -->
+        <div class="tab-pane" id="tab-analytics">
+          <div style="display:flex;justify-content:flex-end;gap:1rem;margin-bottom:1rem;">
+            <button class="btn btn-primary" style="padding:0.5rem 1.25rem;font-size:0.85rem;" onclick="exportCSV()">⬇ Export CSV</button>
+            <button class="btn" style="padding:0.5rem 1.25rem;font-size:0.85rem;border:1px solid var(--border-color);" onclick="exportPDF()">🖨 Print Report</button>
+          </div>
+          <div class="charts-grid">
+            <div class="chart-container-card">
+              <h3>Monthly Donations Volume</h3>
+              <div class="chart-canvas-wrapper">
+                <canvas id="chart-monthly-volume"></canvas>
+              </div>
+            </div>
+            
+            <div class="chart-container-card">
+              <h3>Donation Status Distribution</h3>
+              <div class="chart-canvas-wrapper">
+                <canvas id="chart-status-distribution"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- AI INSIGHTS TAB -->
+        <!-- ========================================== -->
+        <div class="tab-pane" id="tab-ai">
+          <div class="content-card">
+            <h3 style="margin-bottom:0.5rem;">🤖 AI Insights & Smart Recommendations</h3>
+            <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:2rem;">Real-time AI predictions based on your donation history, expiry data, and platform activity.</p>
+            <div id="ai-insights-container">
+              <div class="skeleton-line" style="width:70%;"></div>
+              <div class="skeleton-line" style="width:50%;margin-top:1rem;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 7: PRIVATE CHAT -->
+        <!-- ========================================== -->
+        <div class="tab-pane" id="tab-chat">
+          <div class="chat-layout">
+            <!-- Sidebar Contacts -->
+            <div class="chat-sidebar">
+              <ul class="chat-contacts-list" id="chat-contacts-list">
+                <!-- Populated dynamically -->
+              </ul>
+            </div>
+            <!-- Chat history box -->
+            <div class="chat-area">
+              <div class="chat-history" id="chat-history-box">
+                <p style="color:var(--text-secondary);font-size:0.85rem;text-align:center;">Select a contact to start chatting.</p>
+              </div>
+              <div id="typing-indicator" style="padding:0.5rem 1.5rem;font-size:0.82rem;color:var(--text-secondary);display:none;">Typing...</div>
+              <form id="chat-input-form" class="chat-input-area">
+                <input type="text" id="chat-message-input" class="form-input" placeholder="Type a message...">
+                <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1.5rem;">Send</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 8: NOTIFICATIONS -->
+        <!-- ========================================== -->
+        <div class="tab-pane" id="tab-notifications">
+          <div class="content-card">
+            <div class="timeline-container" id="notifications-tab-list" style="padding: 1rem 0;">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 9: REPORTS -->
+        <!-- ========================================== -->
+        <div class="tab-pane" id="tab-reports">
+          <div class="content-card" style="max-width: 600px;">
+            <h3 data-i18n="donorNavReports">Submit Support Complaint File</h3>
+            <form id="report-form" style="display: flex; flex-direction: column; gap: 1.5rem; margin-top: 1.5rem;">
+              <div class="form-group">
+                <label class="form-label">Subject Title</label>
+                <input type="text" id="reportSubject" class="form-input" required placeholder="e.g. Delivery Delay">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Issue Category</label>
+                <select id="reportCategory" class="form-input" style="background-color: var(--bg-card);" required>
+                  <option value="Delivery Issues">Delivery Issues</option>
+                  <option value="Technical Problems">Technical Problems</option>
+                  <option value="Volunteer Misconduct">Volunteer Misconduct</option>
+                  <option value="Charity Issues">Charity Issues</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Description Details</label>
+                <textarea id="reportDesc" class="form-input" rows="4" required placeholder="Provide details here..."></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary" style="align-self: flex-start; padding: 0.75rem 2rem;">Submit Report</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 10: ORGANIZATION PROFILE -->
+        <!-- ========================================== -->
+        <div class="tab-pane" id="tab-profile">
+          <div class="content-card" style="max-width: 600px;">
+            <h3 data-i18n="donorNavProfile">Organization Profile File</h3>
+            <form id="profile-form" style="display: flex; flex-direction: column; gap: 1.5rem; margin-top: 1.5rem;">
+              <div class="form-group">
+                <label class="form-label">Organization Logo</label>
+                <!-- SVG logo display -->
+                <svg style="width: 64px; height: 64px; border-radius:50%; background-color: var(--border-color); padding: 10px;" viewBox="0 0 24 24">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z" fill="var(--brand-primary)"/>
+                  <path d="M2 17l10 5 10-5" fill="none" stroke="var(--brand-primary)" stroke-width="2"/>
+                </svg>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Facility Name</label>
+                <input type="text" id="profileName" class="form-input" value="Green Bistro">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Organization Class Type</label>
+                <input type="text" id="profileType" class="form-input" value="Restaurant" disabled>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email Address</label>
+                <input type="email" id="profileEmail" class="form-input" value="sarah@greenbistro.com" disabled>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Phone Contact</label>
+                <input type="text" id="profilePhone" class="form-input" value="052890123">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Operational Street Address</label>
+                <input type="text" id="profileAddress" class="form-input" value="123 Eco Avenue, Green District">
+              </div>
+              <button type="submit" class="btn btn-primary" style="align-self: flex-start; padding: 0.75rem 2rem;">Save Changes</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 11: SYSTEM SETTINGS -->
+        <!-- ========================================== -->
+        <div class="tab-pane" id="tab-settings">
+          <div class="content-card" style="max-width: 600px;">
+            <h3 data-i18n="donorNavSettings">Configure Console Preferences</h3>
+            <form style="display: flex; flex-direction: column; gap: 1.5rem; margin-top: 1.5rem;">
+              <div class="form-group">
+                <label class="form-label">Update Password</label>
+                <input type="password" class="form-input" placeholder="••••••••">
+              </div>
+              <div class="form-group" style="display: flex; gap: 1.5rem; flex-direction: column;">
+                <label class="remember-me">
+                  <input type="checkbox" checked>
+                  <span>Email Alerts on Requests Approval</span>
+                </label>
+                <label class="remember-me">
+                  <input type="checkbox" checked>
+                  <span>SMS updates on Courier Arrival</span>
+                </label>
+              </div>
+              <button type="button" class="btn btn-primary" style="align-self: flex-start; padding: 0.75rem 2rem;">Save Configurations</button>
+            </form>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- SCRIPTS & CONSOLE ENGINES -->
+  <!-- ========================================== -->
+  <script type="module">
+    import { translations } from './translations.js';
+    import {
+      getMe, logout, getDonations, createDonation, requestDonation, approveDonation,
+      acceptDelivery, updateDonationStatus, expireDonation, deleteDonation,
+      getMessages, sendMessage, getNotifications, markNotificationRead, deleteNotification,
+      submitReport, predictWaste, recommendCharities,
+      statusColor, badge, showToast, confirmDialog, emptyState, skeleton
+    } from './api.js';
+
+    // ── State ──────────────────────────────────────────
+    let currentLang = localStorage.getItem('foodsaver_lang') || 'en';
+    let currentTheme = localStorage.getItem('foodsaver_theme') || 'light';
+    let currentUser = null;
+    let myDonations = [];
+    let allNotifications = [];
+    let activeContact = null;
+    let lineChartInst = null, pieChartInst = null, barChartInst = null;
+    let currentActiveTabKey = 'donorNavDashboard';
+    let notifPollInterval = null;
+    let donPollInterval = null;
+    let typingTimeout = null;
+
+    const htmlEl = document.documentElement;
+    const bodyEl = document.body;
+    const themeBtn = document.getElementById('theme-toggle');
+    const langBtn = document.getElementById('lang-toggle');
+
+    // ── Theme ───────────────────────────────────────────
+    function applyTheme() {
+      if (currentTheme === 'dark') {
+        htmlEl.classList.add('dark');
+        themeBtn.querySelector('.sun-icon').style.display = 'block';
+        themeBtn.querySelector('.moon-icon').style.display = 'none';
+      } else {
+        htmlEl.classList.remove('dark');
+        themeBtn.querySelector('.sun-icon').style.display = 'none';
+        themeBtn.querySelector('.moon-icon').style.display = 'block';
+      }
+      renderCharts();
+    }
+    themeBtn.addEventListener('click', () => {
+      currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+      localStorage.setItem('foodsaver_theme', currentTheme);
+      applyTheme();
+    });
+
+    // ── Language ─────────────────────────────────────────
+    function applyLanguage(lang) {
+      if (lang === 'ar') {
+        bodyEl.setAttribute('dir', 'rtl');
+        bodyEl.classList.remove('lang-en');
+        bodyEl.classList.add('lang-ar');
+        langBtn.textContent = 'English';
+      } else {
+        bodyEl.setAttribute('dir', 'ltr');
+        bodyEl.classList.remove('lang-ar');
+        bodyEl.classList.add('lang-en');
+        langBtn.textContent = 'العربية';
+      }
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (translations[lang]?.[key]) el.textContent = translations[lang][key];
+      });
+      const bc = document.getElementById('current-tab-breadcrumb');
+      if (bc) bc.textContent = translations[lang]?.[currentActiveTabKey] || 'Dashboard Overview';
+    }
+    langBtn.addEventListener('click', () => {
+      currentLang = currentLang === 'en' ? 'ar' : 'en';
+      localStorage.setItem('foodsaver_lang', currentLang);
+      applyLanguage(currentLang);
+    });
+
+    // ── Sidebar Collapse ─────────────────────────────────
+    document.getElementById('sidebar-collapse-btn').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    });
+
+    // ── Notification Drawer ──────────────────────────────
+    const bellBtn = document.getElementById('notification-bell-btn');
+    const drawer = document.getElementById('notification-drawer');
+    const drawerClose = document.getElementById('drawer-close-btn');
+    bellBtn.addEventListener('click', () => { drawer.classList.toggle('active'); loadNotifications(); });
+    drawerClose.addEventListener('click', () => drawer.classList.remove('active'));
+
+    // ── Tab Navigation ───────────────────────────────────
+    document.querySelectorAll('.sidebar-menu-btn[data-tab]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.sidebar-menu-btn[data-tab]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+        const tabId = btn.getAttribute('data-tab');
+        document.getElementById(tabId)?.classList.add('active');
+        const key = btn.querySelector('span[data-i18n]')?.getAttribute('data-i18n');
+        if (key) {
+          currentActiveTabKey = key;
+          const bc = document.getElementById('current-tab-breadcrumb');
+          if (bc) bc.textContent = translations[currentLang]?.[key] || key;
+        }
+        // Load tab-specific data
+        if (tabId === 'tab-my-donations') loadMyDonations();
+        if (tabId === 'tab-requests') loadRequests();
+        if (tabId === 'tab-delivery') loadDeliveries();
+        if (tabId === 'tab-notifications') loadNotificationsTab();
+        if (tabId === 'tab-analytics') renderCharts();
+        if (tabId === 'tab-ai') loadAIInsights();
+        if (tabId === 'tab-chat') loadChatContacts();
+      });
+    });
+
+    // ── Search ───────────────────────────────────────────
+    document.getElementById('global-search')?.addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase();
+      renderMyDonations(myDonations.filter(d =>
+        d.foodName?.toLowerCase().includes(q) ||
+        d.category?.toLowerCase().includes(q) ||
+        d.status?.toLowerCase().includes(q)
+      ));
+    });
+
+    // ── CORE DATA LOADERS ────────────────────────────────
+
+    async function loadOverview() {
+      try {
+        const { donations } = await getDonations();
+        const mine = donations.filter(d => d.donorName === currentUser?.fullName);
+        myDonations = mine;
+        renderStats(mine);
+        renderOverviewLogs(mine);
+        renderCharts();
+      } catch (err) {
+        console.error('Overview load failed:', err);
+      }
+    }
+
+    async function loadMyDonations(filter = 'all') {
+      const container = document.getElementById('my-donations-grid');
+      if (!container) return;
+      container.innerHTML = `<div class="skeleton-line" style="width:60%;margin-bottom:1rem;"></div><div class="skeleton-line" style="width:80%;"></div>`;
+      try {
+        const { donations } = await getDonations();
+        myDonations = donations.filter(d => d.donorName === currentUser?.fullName);
+        let filtered = myDonations;
+        if (filter !== 'all') filtered = myDonations.filter(d => d.status.toLowerCase() === filter);
+        renderMyDonations(filtered);
+      } catch (err) {
+        container.innerHTML = emptyState('⚠️', 'Could not load donations', err.message);
+      }
+    }
+
+    async function loadRequests() {
+      const container = document.getElementById('charity-requests-list');
+      if (!container) return;
+      container.innerHTML = `<p style="color:var(--text-secondary);padding:1rem;">Loading requests...</p>`;
+      try {
+        const { donations } = await getDonations();
+        const requests = donations.filter(d => d.donorName === currentUser?.fullName && d.status === 'Requested');
+        renderRequests(requests);
+      } catch (err) {
+        container.innerHTML = emptyState('📭', 'No pending requests', 'Requests will appear here when charities submit them.');
+      }
+    }
+
+    async function loadDeliveries() {
+      const container = document.getElementById('active-deliveries-list');
+      if (!container) return;
+      container.innerHTML = `<p style="color:var(--text-secondary);padding:1rem;">Loading deliveries...</p>`;
+      try {
+        const { donations } = await getDonations();
+        const deliveries = donations.filter(d =>
+          d.donorName === currentUser?.fullName &&
+          ['Approved','Volunteer Assigned','Picked Up','Delivering'].includes(d.status)
+        );
+        renderDeliveries(deliveries);
+      } catch (err) {
+        container.innerHTML = emptyState('🚚', 'No active deliveries', 'Approved donations will appear here for tracking.');
+      }
+    }
+
+    async function loadNotifications() {
+      try {
+        const { notifications } = await getNotifications();
+        allNotifications = notifications;
+        renderDrawerNotifications();
+        updateBadge();
+      } catch {}
+    }
+
+    async function loadNotificationsTab() {
+      await loadNotifications();
+      const container = document.getElementById('notifications-tab-list');
+      if (!container) return;
+      renderNotificationsTab();
+    }
+
+    async function loadAIInsights() {
+      const container = document.getElementById('ai-insights-container');
+      if (!container) return;
+      container.innerHTML = `<div class="skeleton-line" style="width:70%;"></div><div class="skeleton-line" style="width:50%;margin-top:1rem;"></div>`;
+      try {
+        const [wasteData, charityData] = await Promise.all([predictWaste(), recommendCharities()]);
+        let html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">';
+        wasteData.forecasts.forEach(f => {
+          html += `<div class="widget-card-sm" style="border-left:4px solid #f59e0b;">
+            <span class="widget-card-sm-title" style="color:#f59e0b;">🤖 AI Forecast — ${f.confidence} confidence</span>
+            <span style="font-size:1rem;font-weight:700;color:var(--text-primary);margin:0.5rem 0;display:block;">${f.title}</span>
+            <p style="font-size:0.85rem;color:var(--text-secondary);">${f.desc}</p>
+          </div>`;
+        });
+        html += '</div>';
+        html += '<h4 style="margin:2rem 0 1rem;font-size:1.05rem;">🏥 Recommended Charities for Approval</h4>';
+        html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;">';
+        charityData.recommendations.forEach(c => {
+          html += `<div class="widget-card-sm" style="border-left:4px solid var(--brand-primary);">
+            <span class="widget-card-sm-title">🏠 ${c.name}</span>
+            <span style="font-size:0.85rem;color:var(--text-secondary);margin-top:0.25rem;display:block;">📍 ${c.distance} · ${c.capacity}</span>
+            <span style="font-size:1.25rem;font-weight:800;color:var(--brand-primary);margin-top:0.5rem;display:block;">Match: ${c.matchScore}</span>
+          </div>`;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+      } catch (err) {
+        container.innerHTML = emptyState('🤖', 'AI unavailable', 'Predictions will appear here once data is available.');
+      }
+    }
+
+    async function loadChatContacts() {
+      const list = document.getElementById('chat-contacts-list');
+      if (!list) return;
+      // Use donation-linked users as contacts
+      try {
+        const { donations } = await getDonations();
+        const mine = donations.filter(d => d.donorName === currentUser?.fullName && d.charity && d.charity !== '-');
+        const contacts = [...new Set(mine.map(d => d.charity))];
+        list.innerHTML = contacts.length
+          ? contacts.map(c => `<li class="chat-contact-item" data-contact="${c}">${c}</li>`).join('')
+          : `<li style="padding:1rem;color:var(--text-secondary);font-size:0.85rem;">No contacts yet</li>`;
+        list.querySelectorAll('.chat-contact-item').forEach(item => {
+          item.addEventListener('click', () => {
+            list.querySelectorAll('.chat-contact-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            activeContact = item.getAttribute('data-contact');
+            loadConversation(activeContact);
+          });
+        });
+        if (contacts.length) {
+          activeContact = contacts[0];
+          list.querySelector('.chat-contact-item')?.classList.add('active');
+          loadConversation(activeContact);
+        }
+      } catch {}
+    }
+
+    async function loadConversation(contact) {
+      const chatBox = document.getElementById('chat-history-box');
+      if (!chatBox) return;
+      chatBox.innerHTML = `<p style="color:var(--text-secondary);font-size:0.85rem;text-align:center;">Loading...</p>`;
+      try {
+        const { messages } = await getMessages(contact);
+        chatBox.innerHTML = messages.length ? '' : `<p style="color:var(--text-secondary);font-size:0.85rem;text-align:center;">No messages yet. Say hello!</p>`;
+        messages.forEach(m => appendMessage(m, m.sender === currentUser?.fullName ? 'sent' : 'received'));
+        chatBox.scrollTop = chatBox.scrollHeight;
+      } catch {}
+    }
+
+    function appendMessage(m, direction) {
+      const chatBox = document.getElementById('chat-history-box');
+      if (!chatBox) return;
+      const bubble = document.createElement('div');
+      bubble.className = `chat-bubble ${direction}`;
+      bubble.innerHTML = `
+        ${m.text ? `<span>${m.text}</span>` : ''}
+        ${m.image ? `<img src="${m.image}" style="max-width:200px;border-radius:0.5rem;margin-top:0.5rem;" />` : ''}
+        <div style="font-size:0.7rem;opacity:0.6;text-align:right;margin-top:0.25rem;">${m.timestamp || ''} ${direction === 'sent' ? '✓✓' : ''}</div>`;
+      chatBox.appendChild(bubble);
+    }
+
+    // ── RENDERERS ─────────────────────────────────────────
+
+    function renderStats(donations) {
+      const s = e => document.getElementById(e);
+      if (!s('stat-total')) return;
+      s('stat-total').textContent = donations.length;
+      s('stat-active').textContent = donations.filter(d => d.status === 'Available').length;
+      s('stat-pending').textContent = donations.filter(d => d.status === 'Requested').length;
+      s('stat-completed').textContent = donations.filter(d => d.status === 'Completed').length;
+      s('stat-expired').textContent = donations.filter(d => d.status === 'Expired').length;
+    }
+
+    function renderOverviewLogs(donations = []) {
+      const container = document.getElementById('timeline-overview');
+      if (!container) return;
+      if (!donations.length) {
+        container.innerHTML = emptyState('📋', 'No activity yet', 'Your donation events will appear here.');
+        return;
+      }
+      container.innerHTML = donations.slice(0, 8).map(d => `
+        <div class="timeline-item">
+          <div class="timeline-dot" style="background:${statusColor(d.status)};"></div>
+          <div class="timeline-content">
+            <strong>${d.foodName}</strong> (${d.id})
+            <div style="font-size:0.8rem;color:var(--text-secondary);">Status: ${d.status} · ${d.date}</div>
+          </div>
+        </div>`).join('');
+    }
+
+    function renderMyDonations(donations = myDonations) {
+      const container = document.getElementById('my-donations-grid');
+      if (!container) return;
+      if (!donations.length) {
+        container.innerHTML = emptyState('🍱', 'No donations yet', 'Add your first donation using the "Add Donation" tab.');
+        return;
+      }
+      container.innerHTML = donations.map(d => `
+        <div class="donation-item-card" id="card-${d.id}">
+          <div class="donation-img-placeholder">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M3 11l19-9-9 19-2-8-8-2z"/>
+            </svg>
+            <div style="position:absolute;top:0.75rem;right:0.75rem;">${badge(d.status)}</div>
+          </div>
+          <div class="donation-card-content">
+            <div class="donation-card-title">${d.foodName}</div>
+            <div class="donation-card-meta">
+              <span>📦 ${d.quantity} · 🍽 ${d.meals} meals</span>
+              <span>🏷 ${d.category} · ⏱ Expires: ${d.expiry}</span>
+              <span>📅 ${d.date}</span>
+            </div>
+            <div style="display:flex;gap:0.5rem;margin-top:auto;flex-wrap:wrap;">
+              ${d.status === 'Available' ? `<button class="btn btn-primary" style="padding:0.45rem 1rem;font-size:0.8rem;" onclick="triggerExpire('${d.id}')">Mark Expired</button>` : ''}
+              ${['Available','Expired'].includes(d.status) ? `<button class="btn" style="padding:0.45rem 1rem;font-size:0.8rem;border:1px solid #ef4444;color:#ef4444;" onclick="triggerDelete('${d.id}')">Delete</button>` : ''}
+            </div>
+          </div>
+        </div>`).join('');
+    }
+
+    function renderRequests(requests = []) {
+      const container = document.getElementById('charity-requests-list');
+      if (!container) return;
+      if (!requests.length) {
+        container.innerHTML = emptyState('📭', 'No pending requests', 'Charity requests will appear here once submitted.');
+        return;
+      }
+      container.innerHTML = `<div class="table-wrapper"><table class="data-table"><thead><tr>
+        <th>Donation ID</th><th>Food Name</th><th>Charity</th><th>Date</th><th>Actions</th>
+      </tr></thead><tbody>` + requests.map(d => `<tr>
+        <td>${d.id}</td>
+        <td>${d.foodName}</td>
+        <td>${d.charity}</td>
+        <td>${d.date}</td>
+        <td>
+          <button class="btn btn-primary" style="padding:0.35rem 0.9rem;font-size:0.8rem;" onclick="triggerApprove('${d.id}')">Approve</button>
+          <button class="btn" style="padding:0.35rem 0.9rem;font-size:0.8rem;border:1px solid #ef4444;color:#ef4444;margin-left:0.5rem;" onclick="triggerReject('${d.id}')">Reject</button>
+        </td>
+      </tr>`).join('') + '</tbody></table></div>';
+    }
+
+    function renderDeliveries(deliveries = []) {
+      const container = document.getElementById('active-deliveries-list');
+      if (!container) return;
+      if (!deliveries.length) {
+        container.innerHTML = emptyState('🚚', 'No active deliveries', 'Approved donations will appear here for tracking.');
+        return;
+      }
+      container.innerHTML = deliveries.map(d => `
+        <div class="widget-card-sm" style="border-left:4px solid ${statusColor(d.status)};">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <strong>${d.foodName}</strong> ${badge(d.status)}
+          </div>
+          <div style="font-size:0.85rem;color:var(--text-secondary);margin-top:0.5rem;">
+            <span>🏠 To: ${d.charity}</span><br>
+            <span>🚗 Courier: ${d.volunteer !== '-' ? d.volunteer : 'Awaiting assignment'}</span>
+          </div>
+          <div class="mock-map-visualizer" style="height:180px;margin-top:1rem;">
+            <div class="road-line road-horizontal"></div>
+            <div class="road-line road-vertical"></div>
+            <div class="marker-courier"></div>
+          </div>
+        </div>`).join('');
+    }
+
+    function renderDrawerNotifications() {
+      const list = document.getElementById('drawer-notifications-list');
+      if (!list) return;
+      if (!allNotifications.length) {
+        list.innerHTML = emptyState('🔔', 'All caught up!', 'No new notifications.');
+        return;
+      }
+      list.innerHTML = allNotifications.map(n => `
+        <div class="drawer-item" style="${!n.read ? 'border-left:3px solid var(--brand-primary);' : ''}">
+          <div class="drawer-item-title">${n.title}</div>
+          <div style="font-size:0.82rem;color:var(--text-secondary);margin:0.25rem 0;">${n.text}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.5rem;">
+            <span class="drawer-item-time">${n.time || 'Just now'}</span>
+            <div style="display:flex;gap:0.5rem;">
+              ${!n.read ? `<button class="btn" style="font-size:0.75rem;color:var(--brand-primary);" onclick="markRead('${n.id}')">Mark read</button>` : ''}
+              <button class="btn" style="font-size:0.75rem;color:#ef4444;" onclick="removeNotif('${n.id}')">✕</button>
+            </div>
+          </div>
+        </div>`).join('');
+    }
+
+    function renderNotificationsTab() {
+      const container = document.getElementById('notifications-tab-list');
+      if (!container) return;
+      if (!allNotifications.length) {
+        container.innerHTML = emptyState('🔔', 'All caught up!', 'No notifications yet.');
+        return;
+      }
+      container.innerHTML = allNotifications.map(n => `
+        <div class="timeline-item" style="margin-bottom:1rem;padding:1rem;background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--border-radius-md);${!n.read ? 'border-left:4px solid var(--brand-primary);' : ''}">
+          <strong>${n.title}</strong>
+          <p style="font-size:0.85rem;color:var(--text-secondary);margin:0.25rem 0;">${n.text}</p>
+          <div style="display:flex;justify-content:space-between;margin-top:0.5rem;">
+            <span style="font-size:0.75rem;color:var(--text-secondary);">${n.time || 'Just now'}</span>
+            <div style="display:flex;gap:0.5rem;">
+              ${!n.read ? `<button class="btn" style="font-size:0.75rem;color:var(--brand-primary);" onclick="markRead('${n.id}')">Mark read</button>` : '<span style="font-size:0.75rem;color:var(--text-secondary);">Read</span>'}
+              <button class="btn" style="font-size:0.75rem;color:#ef4444;" onclick="removeNotif('${n.id}')">Delete</button>
+            </div>
+          </div>
+        </div>`).join('');
+    }
+
+    function updateBadge() {
+      const unread = allNotifications.filter(n => !n.read).length;
+      const badge = document.getElementById('bell-badge');
+      if (badge) badge.style.display = unread > 0 ? 'block' : 'none';
+    }
+
+    // ── ACTION HANDLERS ──────────────────────────────────
+
+    window.triggerExpire = async function(id) {
+      confirmDialog('Mark this listing as expired?', async () => {
+        try {
+          await expireDonation(id);
+          showToast(null, 'Listing marked as expired.');
+          loadMyDonations();
+          loadOverview();
+        } catch (err) { showToast(null, err.message, 'error'); }
+      });
+    };
+
+    window.triggerDelete = async function(id) {
+      confirmDialog('Permanently delete this donation listing?', async () => {
+        try {
+          await deleteDonation(id);
+          showToast(null, 'Listing deleted.');
+          loadMyDonations();
+          loadOverview();
+        } catch (err) { showToast(null, err.message, 'error'); }
+      });
+    };
+
+    window.triggerApprove = async function(id) {
+      try {
+        await approveDonation(id);
+        showToast(null, 'Request approved! Volunteer notification sent.');
+        loadRequests();
+        loadOverview();
+      } catch (err) { showToast(null, err.message, 'error'); }
+    };
+
+    window.triggerReject = function(id) {
+      showToast(null, 'Request rejected.');
+      loadRequests();
+    };
+
+    window.markRead = async function(id) {
+      await markNotificationRead(id);
+      await loadNotifications();
+      renderNotificationsTab();
+    };
+
+    window.removeNotif = async function(id) {
+      await deleteNotification(id);
+      await loadNotifications();
+      renderNotificationsTab();
+    };
+
+    // ── DONATION FORM ────────────────────────────────────
+    const donationForm = document.getElementById('donation-form');
+    const formError = document.getElementById('form-error-alert');
+    const formSuccess = document.getElementById('form-success-alert');
+
+    donationForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      formError.style.display = 'none';
+      formSuccess.style.display = 'none';
+
+      const foodName = document.getElementById('foodName').value.trim();
+      const category = document.getElementById('foodCategory').value;
+      const quantity = document.getElementById('quantity').value.trim();
+      const meals = document.getElementById('mealsCount').value;
+      const expiryDate = document.getElementById('expiryDate').value;
+      const expiryTime = document.getElementById('expiryTime').value;
+      const address = document.getElementById('pickupAddress').value.trim();
+      const instructions = document.getElementById('instructions')?.value || '';
+      const win = document.getElementById('pickupWindow')?.value || '';
+
+      // Validate expiry
+      const expDT = new Date(`${expiryDate}T${expiryTime}`);
+      if (expDT <= new Date()) {
+        formError.textContent = 'Expiration date/time must be in the future.';
+        formError.style.display = 'block';
+        return;
+      }
+      if (parseInt(meals) <= 0) {
+        formError.textContent = 'Number of meals must be greater than zero.';
+        formError.style.display = 'block';
+        return;
+      }
+
+      try {
+        const submitBtn = donationForm.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Publishing...';
+        await createDonation({ foodName, category, quantity, meals, expiryDate, expiryTime, address, instructions, window: win });
+        formSuccess.textContent = 'Donation published successfully!';
+        formSuccess.style.display = 'block';
+        donationForm.reset();
+        loadOverview();
+        setTimeout(() => {
+          formSuccess.style.display = 'none';
+          document.querySelector('.sidebar-menu-btn[data-tab="tab-my-donations"]')?.click();
+        }, 1500);
+      } catch (err) {
+        formError.textContent = err.message;
+        formError.style.display = 'block';
+      } finally {
+        const submitBtn = donationForm.querySelector('button[type="submit"]');
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Publish Donation'; }
+      }
+    });
+
+    document.getElementById('btn-save-draft')?.addEventListener('click', () => {
+      showToast(null, 'Draft saved locally.');
+    });
+
+    // ── CHAT ─────────────────────────────────────────────
+    const chatForm = document.getElementById('chat-input-form');
+    const chatInput = document.getElementById('chat-message-input');
+    const chatBox = document.getElementById('chat-history-box');
+    const typingIndicator = document.getElementById('typing-indicator');
+
+    chatForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const text = chatInput.value.trim();
+      if (!text || !activeContact) return;
+      try {
+        const { msg } = await sendMessage(activeContact, text);
+        appendMessage(msg, 'sent');
+        chatInput.value = '';
+        chatBox.scrollTop = chatBox.scrollHeight;
+        // Simulate typing response
+        if (typingIndicator) typingIndicator.style.display = 'block';
+        setTimeout(() => {
+          if (typingIndicator) typingIndicator.style.display = 'none';
+        }, 2000);
+      } catch (err) { showToast(null, err.message, 'error'); }
+    });
+
+    // ── REPORT FORM ──────────────────────────────────────
+    const reportForm = document.getElementById('report-form');
+    reportForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const subject = document.getElementById('reportSubject').value;
+      const category = document.getElementById('reportCategory').value;
+      const description = document.getElementById('reportDesc').value;
+      try {
+        await submitReport({ subject, category, description });
+        showToast(null, 'Report submitted successfully. Support team will review it.');
+        reportForm.reset();
+      } catch (err) { showToast(null, err.message, 'error'); }
+    });
+
+    // ── CHART RENDERING ──────────────────────────────────
+    function renderCharts() {
+      const isDark = htmlEl.classList.contains('dark');
+      const textColor = isDark ? '#99ae94' : '#4a5c43';
+      const gridColor = isDark ? 'rgba(92,179,103,0.1)' : 'rgba(117,201,127,0.1)';
+      const opts = {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: textColor } } },
+        scales: {
+          x: { grid: { color: gridColor }, ticks: { color: textColor } },
+          y: { grid: { color: gridColor }, ticks: { color: textColor } }
+        }
+      };
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul'];
+      // Monthly line chart
+      const lineCtx = document.getElementById('chart-monthly-donations')?.getContext('2d');
+      if (lineCtx) {
+        if (lineChartInst) lineChartInst.destroy();
+        lineChartInst = new Chart(lineCtx, {
+          type: 'line',
+          data: { labels: months, datasets: [{ label: 'Meals Donated', data: [35,60,95,110,150,180,myDonations.reduce((s,d)=>s+d.meals,0)||240], borderColor:'#75C97F', backgroundColor:'rgba(117,201,127,0.15)', fill:true, tension:0.4 }] },
+          options: opts
+        });
+      }
+      // Category doughnut
+      const pieCtx = document.getElementById('chart-categories-distribution')?.getContext('2d');
+      if (pieCtx) {
+        if (pieChartInst) pieChartInst.destroy();
+        pieChartInst = new Chart(pieCtx, {
+          type: 'doughnut',
+          data: { labels:['Bakery','Produce','Dairy','Meals'], datasets:[{ data:[50,20,15,15], backgroundColor:['#75C97F','#AAD480','#EEE59F','#FFFAE0'] }] },
+          options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ labels:{ color:textColor } } } }
+        });
+      }
+      // Analytics bar chart
+      const barCtx = document.getElementById('chart-monthly-volume')?.getContext('2d');
+      if (barCtx) {
+        if (barChartInst) barChartInst.destroy();
+        barChartInst = new Chart(barCtx, {
+          type: 'bar',
+          data: { labels: months, datasets: [{ label: 'Donations Published', data:[8,12,18,22,30,35,myDonations.length||40], backgroundColor:'rgba(117,201,127,0.75)' }] },
+          options: opts
+        });
+      }
+    }
+
+    // ── ANALYTICS EXPORT ─────────────────────────────────
+    window.exportCSV = function() {
+      if (!myDonations.length) { showToast(null, 'No data to export.', 'error'); return; }
+      const header = ['ID','Food Name','Category','Quantity','Meals','Status','Expiry','Date'];
+      const rows = myDonations.map(d => [d.id, d.foodName, d.category, d.quantity, d.meals, d.status, d.expiry, d.date]);
+      const csv = [header, ...rows].map(r => r.join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'foodsaver-donations.csv'; a.click();
+    };
+
+    window.exportPDF = function() {
+      window.print();
+    };
+
+    // ── PROFILE FORM ─────────────────────────────────────
+    document.getElementById('profile-form')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      showToast(null, 'Profile changes saved locally.');
+    });
+
+    // ── LOGOUT ───────────────────────────────────────────
+    document.getElementById('logout-btn')?.addEventListener('click', async () => {
+      try {
+        const data = await logout();
+        window.location.href = data.redirectUrl || '/index.html';
+      } catch { window.location.href = '/index.html'; }
+    });
+
+    // ── INIT ─────────────────────────────────────────────
+    async function init() {
+      try {
+        const { user } = await getMe();
+        currentUser = user;
+        document.getElementById('user-display-name').textContent = user.fullName;
+        document.getElementById('user-display-role').textContent = user.role;
+        document.getElementById('avatar-initials').textContent = user.fullName.charAt(0).toUpperCase();
+        document.getElementById('profileName').value = user.fullName;
+        document.getElementById('profileType').value = user.role;
+        document.getElementById('profileEmail').value = user.email;
+      } catch {
+        window.location.href = '/login.html';
+        return;
+      }
+
+      await loadOverview();
+      await loadNotifications();
+
+      // Poll for notifications every 30 seconds
+      notifPollInterval = setInterval(loadNotifications, 30000);
+      donPollInterval = setInterval(loadOverview, 60000);
+
+      applyTheme();
+      applyLanguage(currentLang);
+    }
+
+    init();
+  </script>
+</body>
+</html>
