@@ -4,7 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
 
-import { getUserByEmail, createUser, getDonations, saveDonations, getMessages, saveMessages, getNotifications, saveNotifications, getReports, saveReports } from './models/db.js';
+import { getUserByEmail, createUser, getDonations, saveDonations, getMessages, saveMessages, getNotifications, saveNotifications, getReports, saveReports, getUsers, saveUsers } from './models/db.js';
 import { authenticateToken, requireAuth, requireRole, generateToken } from './middleware/auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -219,6 +219,7 @@ app.post('/api/donations/create', async (req, res) => {
     const newDon = {
       id: 'DON-' + Math.floor(100 + Math.random() * 900),
       donorName: req.user.fullName,
+      donorEmail: req.user.email,
       orgType: req.user.role,
       foodName,
       category,
@@ -230,6 +231,8 @@ app.post('/api/donations/create', async (req, res) => {
       instructions,
       window,
       charity: '-',
+      charityEmail: '-',
+      requestDate: '-',
       volunteer: '-',
       date: new Date().toISOString().split('T')[0]
     };
@@ -267,6 +270,8 @@ app.post('/api/donations/request', async (req, res) => {
 
     don.status = 'Requested';
     don.charity = req.user.fullName;
+    don.charityEmail = req.user.email;
+    don.requestDate = new Date().toISOString().split('T')[0];
     await saveDonations(donations);
 
     // Notify Donor
@@ -274,6 +279,7 @@ app.post('/api/donations/request', async (req, res) => {
     alerts.unshift({
       id: 'alert_' + Math.random().toString(36).substr(2, 9),
       recipient: don.donorName,
+      recipientEmail: don.donorEmail,
       title: 'Donation Requested',
       text: `${req.user.fullName} requested your listing: "${don.foodName}".`,
       time: 'Just now',
@@ -300,11 +306,12 @@ app.post('/api/donations/approve', async (req, res) => {
     don.status = 'Approved';
     await saveDonations(donations);
 
-    // Notify Charity & Admin
+    // Notify Charity & Admin & Volunteers
     const alerts = await getNotifications();
     alerts.unshift({
       id: 'alert_' + Math.random().toString(36).substr(2, 9),
       recipient: don.charity,
+      recipientEmail: don.charityEmail,
       title: 'Request Approved',
       text: `${don.donorName} approved your request for: "${don.foodName}".`,
       time: 'Just now',
@@ -321,6 +328,38 @@ app.post('/api/donations/approve', async (req, res) => {
     await saveNotifications(alerts);
 
     res.status(200).json({ message: 'Request approved!', donation: don });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Reject Request (Donor)
+app.post('/api/donations/reject', async (req, res) => {
+  try {
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized.' });
+    const { donationId } = req.body;
+    
+    let donations = await getDonations();
+    const don = donations.find(d => d.id === donationId);
+    if (!don) return res.status(404).json({ error: 'Donation not found.' });
+
+    don.status = 'Rejected';
+    await saveDonations(donations);
+
+    // Notify Charity
+    const alerts = await getNotifications();
+    alerts.unshift({
+      id: 'alert_' + Math.random().toString(36).substr(2, 9),
+      recipient: don.charity,
+      recipientEmail: don.charityEmail,
+      title: 'Request Rejected',
+      text: `${don.donorName} rejected your request for: "${don.foodName}".`,
+      time: 'Just now',
+      read: false
+    });
+    await saveNotifications(alerts);
+
+    res.status(200).json({ message: 'Request rejected.', donation: don });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -608,6 +647,54 @@ app.post('/api/reports/delete', async (req, res) => {
     list = list.filter(r => r.id !== reportId);
     await saveReports(list);
     res.status(200).json({ message: 'Report deleted.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- ADMIN USER MANAGEMENT APIS ---
+
+app.get('/api/admin/users', async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'Admin') {
+      return res.status(403).json({ error: 'Forbidden.' });
+    }
+    const users = await getUsers();
+    const safeUsers = users.map(({ passwordHash, ...u }) => u);
+    res.status(200).json({ users: safeUsers });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/users/delete', async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'Admin') {
+      return res.status(403).json({ error: 'Forbidden.' });
+    }
+    const { email } = req.body;
+    let users = await getUsers();
+    users = users.filter(u => u.email.toLowerCase() !== email.toLowerCase());
+    await saveUsers(users);
+    res.status(200).json({ message: 'User deleted.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/users/update', async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'Admin') {
+      return res.status(403).json({ error: 'Forbidden.' });
+    }
+    const { email, fullName } = req.body;
+    let users = await getUsers();
+    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    if (user) {
+      user.fullName = fullName;
+      await saveUsers(users);
+    }
+    res.status(200).json({ message: 'User updated.' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

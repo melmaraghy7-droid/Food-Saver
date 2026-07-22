@@ -787,6 +787,26 @@
 </head>
 <body class="lang-en">
 
+  <!-- Page Loader -->
+  <div id="page-loader">
+    <div class="loader-logo">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="var(--brand-primary)">
+        <path d="M17 8C17 13 12 17 12 17C12 17 7 13 7 8C7 5.24 9.24 3 12 3C14.76 3 17 5.24 17 8Z"/>
+        <path d="M12 21C12 21 4 16 4 9C4 5 7 2 11 2C11 2 12 4.5 12 6"/>
+        <path d="M12 21C12 21 20 16 20 9C20 5 17 2 13 2C13 2 12 4.5 12 6" opacity="0.7"/>
+        <circle cx="12" cy="8" r="1.5" fill="rgba(255,255,255,0.5)"/>
+      </svg>
+      FoodSaver
+    </div>
+    <div class="loader-bar-track"><div class="loader-bar-fill"></div></div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container"></div>
+
+  <!-- Mobile Sidebar Overlay -->
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
   <div class="dashboard-layout">
     
     <!-- Sidebar Navigation Drawer -->
@@ -1398,7 +1418,7 @@
   <script type="module">
     import { translations } from './translations.js';
     import {
-      getMe, logout, getDonations, createDonation, requestDonation, approveDonation,
+      getMe, logout, getDonations, createDonation, requestDonation, approveDonation, rejectDonation,
       acceptDelivery, updateDonationStatus, expireDonation, deleteDonation,
       getMessages, sendMessage, getNotifications, markNotificationRead, deleteNotification,
       submitReport, predictWaste, recommendCharities,
@@ -1548,10 +1568,12 @@
     async function loadRequests() {
       const container = document.getElementById('charity-requests-list');
       if (!container) return;
-      container.innerHTML = `<p style="color:var(--text-secondary);padding:1rem;">Loading requests...</p>`;
       try {
         const { donations } = await getDonations();
-        const requests = donations.filter(d => d.donorName === currentUser?.fullName && d.status === 'Requested');
+        const requests = donations.filter(d => 
+          (d.donorName?.toLowerCase() === currentUser?.fullName?.toLowerCase() || (d.donorEmail && currentUser?.email && d.donorEmail.toLowerCase() === currentUser?.email.toLowerCase())) && 
+          d.status === 'Requested'
+        );
         renderRequests(requests);
       } catch (err) {
         container.innerHTML = emptyState('📭', 'No pending requests', 'Requests will appear here when charities submit them.');
@@ -1739,15 +1761,18 @@
         return;
       }
       container.innerHTML = `<div class="table-wrapper"><table class="data-table"><thead><tr>
-        <th>Donation ID</th><th>Food Name</th><th>Charity</th><th>Date</th><th>Actions</th>
+        <th>Charity Name</th><th>Donation Name</th><th>Requested Quantity</th><th>Request Date</th><th>Current Status</th><th>Actions</th>
       </tr></thead><tbody>` + requests.map(d => `<tr>
-        <td>${d.id}</td>
+        <td><strong>${d.charity || 'Charity'}</strong></td>
         <td>${d.foodName}</td>
-        <td>${d.charity}</td>
-        <td>${d.date}</td>
+        <td>${d.quantity} (${d.meals} meals)</td>
+        <td>${d.requestDate || d.date}</td>
+        <td>${badge(d.status)}</td>
         <td>
-          <button class="btn btn-primary" style="padding:0.35rem 0.9rem;font-size:0.8rem;" onclick="triggerApprove('${d.id}')">Approve</button>
-          <button class="btn" style="padding:0.35rem 0.9rem;font-size:0.8rem;border:1px solid #ef4444;color:#ef4444;margin-left:0.5rem;" onclick="triggerReject('${d.id}')">Reject</button>
+          <div style="display:flex;gap:0.5rem;align-items:center;">
+            <button class="btn btn-primary" style="padding:0.35rem 0.9rem;font-size:0.8rem;" onclick="triggerApprove('${d.id}')">Approve Request</button>
+            <button class="btn" style="padding:0.35rem 0.9rem;font-size:0.8rem;border:1px solid #ef4444;color:#ef4444;" onclick="triggerReject('${d.id}')">Reject Request</button>
+          </div>
         </td>
       </tr>`).join('') + '</tbody></table></div>';
     }
@@ -1831,8 +1856,8 @@
         try {
           await expireDonation(id);
           showToast(null, 'Listing marked as expired.');
-          loadMyDonations();
-          loadOverview();
+          await loadMyDonations();
+          await loadOverview();
         } catch (err) { showToast(null, err.message, 'error'); }
       });
     };
@@ -1842,8 +1867,8 @@
         try {
           await deleteDonation(id);
           showToast(null, 'Listing deleted.');
-          loadMyDonations();
-          loadOverview();
+          await loadMyDonations();
+          await loadOverview();
         } catch (err) { showToast(null, err.message, 'error'); }
       });
     };
@@ -1851,15 +1876,24 @@
     window.triggerApprove = async function(id) {
       try {
         await approveDonation(id);
-        showToast(null, 'Request approved! Volunteer notification sent.');
-        loadRequests();
-        loadOverview();
+        showToast(null, 'Request approved! Notification sent to Charity and Volunteers.');
+        await loadRequests();
+        await loadMyDonations();
+        await loadOverview();
+        await loadDeliveries();
       } catch (err) { showToast(null, err.message, 'error'); }
     };
 
-    window.triggerReject = function(id) {
-      showToast(null, 'Request rejected.');
-      loadRequests();
+    window.triggerReject = async function(id) {
+      confirmDialog('Reject this donation request?', async () => {
+        try {
+          await rejectDonation(id);
+          showToast(null, 'Request rejected. Notification sent to Charity.');
+          await loadRequests();
+          await loadMyDonations();
+          await loadOverview();
+        } catch (err) { showToast(null, err.message, 'error'); }
+      });
     };
 
     window.markRead = async function(id) {

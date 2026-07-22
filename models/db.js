@@ -33,7 +33,7 @@ export async function getUsers() {
 }
 
 // Save all users
-async function saveUsers(users) {
+export async function saveUsers(users) {
   await ensureDbExists();
   await fs.writeFile(dbPath, JSON.stringify(users, null, 2), 'utf-8');
 }

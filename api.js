@@ -45,6 +45,10 @@ export async function approveDonation(donationId) {
   return apiFetch('POST', '/api/donations/approve', { donationId });
 }
 
+export async function rejectDonation(donationId) {
+  return apiFetch('POST', '/api/donations/reject', { donationId });
+}
+
 export async function acceptDelivery(donationId) {
   return apiFetch('POST', '/api/donations/accept-delivery', { donationId });
 }
@@ -136,19 +140,39 @@ export function timeSince(isoOrString) {
 }
 
 export function showToast(container, message, type = 'success') {
+  const toastBox = document.getElementById('toast-container') || document.body;
   const toast = document.createElement('div');
-  toast.className = `alert alert-${type}`;
-  toast.textContent = message;
-  toast.style.display = 'block';
-  toast.style.position = 'fixed';
-  toast.style.bottom = '2rem';
-  toast.style.right = '2rem';
-  toast.style.zIndex = '9999';
-  toast.style.minWidth = '280px';
-  toast.style.boxShadow = '0 4px 16px rgba(0,0,0,0.12)';
-  toast.style.borderRadius = '0.75rem';
-  document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 3500);
+  toast.className = `toast toast-${type}`;
+  
+  const icons = {
+    success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>',
+    error: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>',
+    warning: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>',
+    info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>'
+  };
+
+  toast.innerHTML = `
+    <div class="toast-icon">${icons[type] || icons.success}</div>
+    <div class="toast-body">
+      <div class="toast-title">${type.charAt(0).toUpperCase() + type.slice(1)}</div>
+      <div class="toast-message">${message}</div>
+    </div>
+    <button class="toast-close" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
+    <div class="toast-progress"></div>
+  `;
+
+  toast.querySelector('.toast-close').addEventListener('click', () => {
+    toast.classList.add('hiding');
+    setTimeout(() => toast.remove(), 350);
+  });
+
+  toastBox.appendChild(toast);
+  setTimeout(() => {
+    toast.classList.add('hiding');
+    setTimeout(() => toast.remove(), 350);
+  }, 4000);
 }
 
 export function confirmDialog(message, onConfirm) {
@@ -157,15 +181,31 @@ export function confirmDialog(message, onConfirm) {
 
 export function skeleton(lines = 3) {
   return Array.from({ length: lines }, () =>
-    `<div style="background:var(--border-color);border-radius:0.5rem;height:1rem;margin-bottom:0.75rem;animation:shimmer 1.5s infinite;"></div>`
+    `<div class="skeleton-line"></div>`
   ).join('');
 }
 
 export function emptyState(icon, title, desc) {
   return `
-  <div style="text-align:center;padding:4rem 2rem;color:var(--text-secondary);">
-    <div style="font-size:3rem;margin-bottom:1rem;">${icon}</div>
-    <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:0.5rem;color:var(--text-primary);">${title}</h3>
-    <p style="font-size:0.9rem;">${desc}</p>
+  <div class="empty-state">
+    <div class="empty-state-icon">${icon}</div>
+    <h3>${title}</h3>
+    <p>${desc}</p>
   </div>`;
 }
+
+// Auto-hide page loader
+if (typeof window !== 'undefined') {
+  window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+      const loader = document.getElementById('page-loader');
+      if (loader) loader.classList.add('hidden');
+    }, 300);
+  });
+  // Fallback timeout in case DOMContentLoaded already fired
+  setTimeout(() => {
+    const loader = document.getElementById('page-loader');
+    if (loader) loader.classList.add('hidden');
+  }, 800);
+}
+

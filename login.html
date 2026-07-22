@@ -3,59 +3,196 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FoodSaver — Login</title>
+  <title>FoodSaver — Sign In</title>
+  <meta name="description" content="Sign in to your FoodSaver account and start reducing food waste today.">
   <link rel="stylesheet" href="./style.css">
   <style>
-    .auth-wrapper {
+    /* ===== AUTH SPLIT LAYOUT ===== */
+    .auth-page {
       min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      overflow: hidden;
+    }
+
+    /* LEFT PANEL — Animated Hero */
+    .auth-hero {
+      background: linear-gradient(145deg, #1a3a1c 0%, #2d6130 40%, #75C97F 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .auth-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    /* Floating Orbs */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.07);
+      animation: orbFloat 8s ease-in-out infinite;
+    }
+    .orb-1 { width: 200px; height: 200px; top: -60px; right: -60px; animation-delay: 0s; }
+    .orb-2 { width: 140px; height: 140px; bottom: 80px; left: -40px; animation-delay: 3s; }
+    .orb-3 { width: 80px; height: 80px; top: 40%; left: 10%; animation-delay: 1.5s; }
+    .orb-4 { width: 50px; height: 50px; bottom: 20%; right: 15%; animation-delay: 5s; }
+
+    @keyframes orbFloat {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-20px) scale(1.05); }
+    }
+
+    .auth-hero-content {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      color: white;
+    }
+
+    .auth-hero-logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 2rem;
+      font-weight: 800;
+      color: white;
+      margin-bottom: 2rem;
+      animation: fadeSlideUp 0.8s ease both;
+    }
+
+    .auth-hero-logo svg {
+      width: 44px;
+      height: 44px;
+      fill: white;
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.2));
+    }
+
+    .auth-hero h2 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 1.25rem;
+      animation: fadeSlideUp 0.8s 0.1s ease both;
+    }
+
+    .auth-hero p {
+      font-size: 1.05rem;
+      opacity: 0.85;
+      line-height: 1.7;
+      max-width: 380px;
+      animation: fadeSlideUp 0.8s 0.2s ease both;
+    }
+
+    .auth-hero-stats {
+      display: flex;
+      gap: 2rem;
+      margin-top: 2.5rem;
+      animation: fadeSlideUp 0.8s 0.3s ease both;
+    }
+
+    .auth-hero-stat {
+      text-align: center;
+    }
+
+    .auth-hero-stat .val {
+      font-size: 1.75rem;
+      font-weight: 800;
+      display: block;
+    }
+
+    .auth-hero-stat .lbl {
+      font-size: 0.8rem;
+      opacity: 0.75;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .hero-divider {
+      width: 1px;
+      background: rgba(255,255,255,0.25);
+      height: 40px;
+      align-self: center;
+    }
+
+    /* RIGHT PANEL — Form */
+    .auth-form-panel {
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 4rem 1rem;
-      background: radial-gradient(circle at 10% 20%, var(--bg-secondary) 0%, var(--bg-primary) 90%);
-    }
-
-    .auth-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: var(--border-radius-lg);
-      padding: 3.5rem 2.5rem;
-      width: 100%;
-      max-width: 480px;
-      box-shadow: var(--shadow-lg);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      padding: 3rem 2rem;
+      background: var(--bg-primary);
       position: relative;
+      overflow-y: auto;
     }
 
-    .auth-header {
-      text-align: center;
+    .auth-form-container {
+      width: 100%;
+      max-width: 440px;
+      animation: fadeSlideUp 0.6s ease both;
+    }
+
+    .auth-floating-controls {
+      position: absolute;
+      top: 1.5rem;
+      right: 1.5rem;
+      display: flex;
+      gap: 0.5rem;
+      z-index: 10;
+    }
+
+    body.lang-ar .auth-floating-controls {
+      right: auto;
+      left: 1.5rem;
+    }
+
+    .auth-form-header {
       margin-bottom: 2.5rem;
     }
 
-    .auth-logo {
+    .auth-form-header .back-link {
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      font-size: 1.75rem;
-      font-weight: 800;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin-bottom: 2rem;
+      transition: color 0.2s;
+    }
+
+    .auth-form-header .back-link:hover {
       color: var(--brand-primary);
-      margin-bottom: 1rem;
     }
 
-    .auth-logo svg {
-      width: 38px;
-      height: 38px;
-      fill: var(--brand-primary);
+    .auth-form-header .back-link svg {
+      width: 16px;
+      height: 16px;
     }
 
-    .auth-header h2 {
-      font-size: 1.85rem;
+    .auth-form-header h1 {
+      font-size: 2rem;
+      font-weight: 800;
       color: var(--text-primary);
+      margin-bottom: 0.5rem;
     }
 
+    .auth-form-header p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+
+    /* Form Elements */
     .form-group {
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.4rem;
     }
 
     .form-label {
@@ -63,41 +200,98 @@
       font-weight: 600;
       margin-bottom: 0.5rem;
       color: var(--text-primary);
-      font-size: 0.95rem;
+      font-size: 0.9rem;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      width: 18px;
+      height: 18px;
+      pointer-events: none;
+      transition: color 0.2s;
+    }
+
+    body.lang-ar .input-icon {
+      left: auto;
+      right: 1rem;
     }
 
     .form-input {
       width: 100%;
-      padding: 0.85rem 1.25rem;
-      border: 1px solid var(--border-color);
+      padding: 0.85rem 1rem 0.85rem 2.85rem;
+      border: 1.5px solid var(--border-color);
       border-radius: var(--border-radius-md);
-      background-color: rgba(255, 255, 255, 0.5);
+      background-color: var(--bg-card);
       color: var(--text-primary);
       font-family: inherit;
+      font-size: 0.95rem;
       outline: none;
-      transition: all var(--transition-fast);
+      transition: all 0.25s;
     }
 
-    html.dark .form-input {
-      background-color: rgba(18, 24, 16, 0.5);
+    body.lang-ar .form-input {
+      padding: 0.85rem 2.85rem 0.85rem 1rem;
+    }
+
+    .form-input:hover {
+      border-color: var(--accent-primary);
     }
 
     .form-input:focus {
       border-color: var(--brand-primary);
-      box-shadow: 0 0 10px rgba(117, 201, 127, 0.2);
+      box-shadow: 0 0 0 4px rgba(117, 201, 127, 0.15);
       background-color: white;
+    }
+
+    .form-input:focus + .input-icon,
+    .input-wrapper:focus-within .input-icon {
+      color: var(--brand-primary);
     }
 
     html.dark .form-input:focus {
       background-color: var(--bg-secondary);
     }
 
+    .password-toggle {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 0;
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s;
+    }
+
+    body.lang-ar .password-toggle {
+      right: auto;
+      left: 1rem;
+    }
+
+    .password-toggle:hover { color: var(--brand-primary); }
+    .password-toggle svg { width: 16px; height: 16px; }
+
     .form-options {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 2rem;
-      font-size: 0.9rem;
+      margin-bottom: 1.75rem;
+      font-size: 0.875rem;
     }
 
     .remember-me {
@@ -107,40 +301,115 @@
       color: var(--text-secondary);
       font-weight: 500;
       cursor: pointer;
+      user-select: none;
     }
 
     .remember-me input {
-      cursor: pointer;
-      accent-color: var(--brand-primary);
       width: 16px;
       height: 16px;
+      accent-color: var(--brand-primary);
+      cursor: pointer;
     }
 
     .forgot-link {
       color: var(--brand-primary);
       font-weight: 600;
+      font-size: 0.875rem;
     }
 
-    .forgot-link:hover {
-      text-decoration: underline;
+    .forgot-link:hover { text-decoration: underline; }
+
+    /* Submit Button */
+    .btn-auth {
+      width: 100%;
+      padding: 1rem;
+      background: linear-gradient(135deg, var(--brand-primary) 0%, var(--accent-primary) 100%);
+      color: white;
+      border: none;
+      border-radius: var(--border-radius-full);
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 14px rgba(117, 201, 127, 0.4);
+      transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-auth::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0);
+      transition: background 0.25s;
+    }
+
+    .btn-auth:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(117, 201, 127, 0.5);
+    }
+
+    .btn-auth:hover::before {
+      background: rgba(255,255,255,0.1);
+    }
+
+    .btn-auth:active {
+      transform: translateY(0) scale(0.98);
+    }
+
+    .btn-auth svg { width: 18px; height: 18px; }
+
+    .btn-auth.loading {
+      pointer-events: none;
+      opacity: 0.8;
+    }
+
+    /* Spinner for button */
+    .btn-spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
 
     /* Alert Boxes */
     .alert {
-      padding: 1rem;
+      padding: 0.875rem 1rem;
       border-radius: var(--border-radius-md);
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.25rem;
       font-weight: 500;
       display: none;
-      font-size: 0.9rem;
+      font-size: 0.875rem;
+      animation: alertSlideIn 0.3s ease;
+      align-items: center;
+      gap: 0.6rem;
     }
+
+    .alert.visible { display: flex; }
+
+    @keyframes alertSlideIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .alert svg { width: 16px; height: 16px; flex-shrink: 0; }
 
     .alert-error {
       background-color: #fee2e2;
       color: #991b1b;
       border: 1px solid #fca5a5;
     }
-
     html.dark .alert-error {
       background-color: #450a0a;
       color: #fca5a5;
@@ -152,113 +421,194 @@
       color: #065f46;
       border: 1px solid #6ee7b7;
     }
-
     html.dark .alert-success {
       background-color: #064e3b;
       color: #6ee7b7;
       border-color: #047857;
     }
 
-    .auth-footer {
+    /* Footer Link */
+    .auth-switch {
       text-align: center;
-      margin-top: 2rem;
+      margin-top: 1.75rem;
       color: var(--text-secondary);
-      font-size: 0.95rem;
+      font-size: 0.9rem;
     }
 
-    .auth-footer a {
+    .auth-switch a {
       color: var(--brand-primary);
-      font-weight: 600;
+      font-weight: 700;
     }
 
-    .auth-footer a:hover {
-      text-decoration: underline;
-    }
+    .auth-switch a:hover { text-decoration: underline; }
 
-    .floating-controls {
-      position: absolute;
-      top: 1.5rem;
-      right: 1.5rem;
+    /* Divider */
+    .form-divider {
       display: flex;
-      gap: 0.5rem;
+      align-items: center;
+      gap: 1rem;
+      margin: 1.5rem 0;
+      color: var(--text-secondary);
+      font-size: 0.8rem;
     }
 
-    body.lang-ar .floating-controls {
-      right: auto;
-      left: 1.5rem;
+    .form-divider::before,
+    .form-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border-color);
+    }
+
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .auth-page {
+        grid-template-columns: 1fr;
+      }
+      .auth-hero {
+        padding: 2.5rem 2rem;
+        min-height: auto;
+      }
+      .auth-hero h2 { font-size: 1.6rem; }
+      .auth-hero-stats { gap: 1.25rem; }
+      .auth-form-panel { padding: 2.5rem 1.5rem; }
     }
   </style>
 </head>
 <body class="lang-en">
 
-  <div class="auth-wrapper">
-    <div class="auth-card">
-      
-      <!-- Lang / Theme Switcher in header of card -->
-      <div class="floating-controls">
+  <div class="auth-page">
+
+    <!-- LEFT: Animated Hero Panel -->
+    <div class="auth-hero">
+      <!-- Floating Orbs -->
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+      <div class="orb orb-4"></div>
+
+      <div class="auth-hero-content">
+        <div class="auth-hero-logo">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M17 8C17 13 12 17 12 17C12 17 7 13 7 8C7 5.24 9.24 3 12 3C14.76 3 17 5.24 17 8Z"/>
+            <path d="M12 21C12 21 4 16 4 9C4 5 7 2 11 2C11 2 12 4.5 12 6"/>
+            <path d="M12 21C12 21 20 16 20 9C20 5 17 2 13 2C13 2 12 4.5 12 6" opacity="0.7"/>
+            <circle cx="12" cy="8" r="1.5" fill="rgba(255,255,255,0.5)"/>
+          </svg>
+          <span>FoodSaver</span>
+        </div>
+        <h2>Reduce Waste.<br>Feed Communities.</h2>
+        <p>Connect restaurants, charities, and volunteers to ensure surplus food reaches those who need it most — in real-time.</p>
+        <div class="auth-hero-stats">
+          <div class="auth-hero-stat">
+            <span class="val">8,400+</span>
+            <span class="lbl">Meals Saved</span>
+          </div>
+          <div class="hero-divider"></div>
+          <div class="auth-hero-stat">
+            <span class="val">320+</span>
+            <span class="lbl">Active Donors</span>
+          </div>
+          <div class="hero-divider"></div>
+          <div class="auth-hero-stat">
+            <span class="val">155T</span>
+            <span class="lbl">CO₂ Saved</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Form Panel -->
+    <div class="auth-form-panel">
+
+      <!-- Top Controls -->
+      <div class="auth-floating-controls">
         <button class="icon-toggle" id="theme-toggle" aria-label="Toggle Dark Mode">
-          <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+          <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;">
             <circle cx="12" cy="12" r="5"></circle>
-            <line x1="12" y1="1" x2="12" y2="3"></line>
-            <line x1="12" y1="21" x2="12" y2="23"></line>
-            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-            <line x1="1" y1="12" x2="3" y2="12"></line>
-            <line x1="21" y1="12" x2="23" y2="12"></line>
-            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            <line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
           </svg>
           <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
           </svg>
         </button>
-        <button class="action-btn login" id="lang-toggle" style="border: 1px solid var(--border-color); padding: 0.5rem 1rem;">العربية</button>
+        <button class="action-btn login" id="lang-toggle" style="border: 1.5px solid var(--border-color); padding: 0.45rem 0.9rem; font-size:0.85rem;">العربية</button>
       </div>
 
-      <div class="auth-header">
-        <a href="/index.html" class="auth-logo">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M17 8C17 13 12 17 12 17C12 17 7 13 7 8C7 5.24 9.24 3 12 3C14.76 3 17 5.24 17 8Z"/>
-            <path d="M12 21C12 21 4 16 4 9C4 5 7 2 11 2C11 2 12 4.5 12 6"/>
-            <path d="M12 21C12 21 20 16 20 9C20 5 17 2 13 2C13 2 12 4.5 12 6" opacity="0.7"/>
-            <circle cx="12" cy="8" r="1.5" fill="#fff"/>
-          </svg>
-          <span>FoodSaver</span>
-        </a>
-        <h2 data-i18n="authLoginTitle">Welcome Back to FoodSaver</h2>
+      <div class="auth-form-container">
+
+        <!-- Header -->
+        <div class="auth-form-header">
+          <a href="/index.html" class="back-link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            <span>Back to Home</span>
+          </a>
+          <h1 data-i18n="authLoginTitle">Welcome back</h1>
+          <p>Sign in to your FoodSaver account to continue making an impact.</p>
+        </div>
+
+        <!-- Alerts -->
+        <div class="alert alert-error" id="error-alert">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          <span id="error-msg">Error message here</span>
+        </div>
+        <div class="alert alert-success" id="success-alert">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          <span id="success-msg">Success message here</span>
+        </div>
+
+        <!-- Login Form -->
+        <form id="login-form" novalidate>
+
+          <div class="form-group">
+            <label class="form-label" for="email" data-i18n="authEmail">Email Address</label>
+            <div class="input-wrapper">
+              <input type="email" id="email" class="form-input" required autocomplete="email" placeholder="you@example.com">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="password" data-i18n="authPassword">Password</label>
+            <div class="input-wrapper">
+              <input type="password" id="password" class="form-input" required autocomplete="current-password" placeholder="••••••••">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              <button type="button" class="password-toggle" id="pw-toggle" aria-label="Toggle password visibility">
+                <svg id="eye-show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                <svg id="eye-hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-options">
+            <label class="remember-me">
+              <input type="checkbox" id="rememberMe">
+              <span data-i18n="authRememberMe">Remember me</span>
+            </label>
+            <a href="#" class="forgot-link" data-i18n="authForgotPassword">Forgot password?</a>
+          </div>
+
+          <button type="submit" class="btn-auth" id="submit-btn">
+            <span id="btn-label" data-i18n="authBtnLogin">Sign In</span>
+            <svg id="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </button>
+        </form>
+
+        <div class="auth-switch">
+          Don't have an account? <a href="/register.html" data-i18n="authNoAccount">Create one here</a>
+        </div>
+
       </div>
-
-      <!-- Alerts -->
-      <div class="alert alert-error" id="error-alert"></div>
-      <div class="alert alert-success" id="success-alert"></div>
-
-      <form id="login-form">
-        <div class="form-group">
-          <label class="form-label" data-i18n="authEmail">Email Address</label>
-          <input type="email" id="email" class="form-input" required placeholder="john@example.com">
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" data-i18n="authPassword">Password</label>
-          <input type="password" id="password" class="form-input" required placeholder="••••••">
-        </div>
-
-        <div class="form-options">
-          <label class="remember-me">
-            <input type="checkbox" id="rememberMe">
-            <span data-i18n="authRememberMe">Remember Me</span>
-          </label>
-          <a href="#" class="forgot-link" data-i18n="authForgotPassword">Forgot Password?</a>
-        </div>
-
-        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 1rem;" data-i18n="authBtnLogin">Sign In</button>
-      </form>
-
-      <div class="auth-footer">
-        <a href="/register.html" data-i18n="authNoAccount">Don't have an account? Register here</a>
-      </div>
-
     </div>
+
   </div>
 
   <script type="module">
@@ -267,106 +617,139 @@
     let currentLang = localStorage.getItem('foodsaver_lang') || 'en';
     let currentTheme = localStorage.getItem('foodsaver_theme') || 'light';
 
-    // Theme Switcher Setup
-    const htmlElement = document.documentElement;
-    const bodyElement = document.body;
-    const themeToggleBtn = document.getElementById('theme-toggle');
-    const langToggleBtn = document.getElementById('lang-toggle');
+    const htmlEl = document.documentElement;
+    const bodyEl = document.body;
+    const themeBtn = document.getElementById('theme-toggle');
+    const langBtn = document.getElementById('lang-toggle');
 
     function applyTheme() {
       if (currentTheme === 'dark') {
-        htmlElement.classList.add('dark');
-        themeToggleBtn.querySelector('.sun-icon').style.display = 'block';
-        themeToggleBtn.querySelector('.moon-icon').style.display = 'none';
+        htmlEl.classList.add('dark');
+        themeBtn.querySelector('.sun-icon').style.display = 'block';
+        themeBtn.querySelector('.moon-icon').style.display = 'none';
       } else {
-        htmlElement.classList.remove('dark');
-        themeToggleBtn.querySelector('.sun-icon').style.display = 'none';
-        themeToggleBtn.querySelector('.moon-icon').style.display = 'block';
+        htmlEl.classList.remove('dark');
+        themeBtn.querySelector('.sun-icon').style.display = 'none';
+        themeBtn.querySelector('.moon-icon').style.display = 'block';
       }
     }
 
-    themeToggleBtn.addEventListener('click', () => {
+    themeBtn.addEventListener('click', () => {
       currentTheme = currentTheme === 'light' ? 'dark' : 'light';
       localStorage.setItem('foodsaver_theme', currentTheme);
       applyTheme();
     });
 
-    // Language Switcher Setup
     function applyLanguage(lang) {
       if (lang === 'ar') {
-        bodyElement.setAttribute('dir', 'rtl');
-        bodyElement.classList.remove('lang-en');
-        bodyElement.classList.add('lang-ar');
-        langToggleBtn.textContent = 'English';
+        bodyEl.setAttribute('dir', 'rtl');
+        bodyEl.classList.remove('lang-en');
+        bodyEl.classList.add('lang-ar');
+        langBtn.textContent = 'English';
       } else {
-        bodyElement.setAttribute('dir', 'ltr');
-        bodyElement.classList.remove('lang-ar');
-        bodyElement.classList.add('lang-en');
-        langToggleBtn.textContent = 'العربية';
+        bodyEl.setAttribute('dir', 'ltr');
+        bodyEl.classList.remove('lang-ar');
+        bodyEl.classList.add('lang-en');
+        langBtn.textContent = 'العربية';
       }
-
       document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
-        if (translations[lang] && translations[lang][key]) {
-          el.textContent = translations[lang][key];
-        }
+        if (translations[lang]?.[key]) el.textContent = translations[lang][key];
       });
-
-      // Update specific placeholders
-      document.getElementById('email').placeholder = lang === 'ar' ? 'example@mail.com' : 'john@example.com';
+      document.getElementById('email').placeholder = lang === 'ar' ? 'example@mail.com' : 'you@example.com';
     }
 
-    langToggleBtn.addEventListener('click', () => {
+    langBtn.addEventListener('click', () => {
       currentLang = currentLang === 'en' ? 'ar' : 'en';
       localStorage.setItem('foodsaver_lang', currentLang);
       applyLanguage(currentLang);
     });
 
-    // Initial setups
     applyTheme();
     applyLanguage(currentLang);
 
-    // Form submission API handler
-    const loginForm = document.getElementById('login-form');
+    // Password visibility toggle
+    const pwInput = document.getElementById('password');
+    const pwToggle = document.getElementById('pw-toggle');
+    const eyeShow = document.getElementById('eye-show');
+    const eyeHide = document.getElementById('eye-hide');
+    pwToggle.addEventListener('click', () => {
+      const isPassword = pwInput.type === 'password';
+      pwInput.type = isPassword ? 'text' : 'password';
+      eyeShow.style.display = isPassword ? 'none' : 'block';
+      eyeHide.style.display = isPassword ? 'block' : 'none';
+    });
+
+    // Form Submission
+    const form = document.getElementById('login-form');
     const errorAlert = document.getElementById('error-alert');
     const successAlert = document.getElementById('success-alert');
+    const errorMsg = document.getElementById('error-msg');
+    const successMsg = document.getElementById('success-msg');
+    const submitBtn = document.getElementById('submit-btn');
+    const btnLabel = document.getElementById('btn-label');
+    const btnArrow = document.getElementById('btn-arrow');
 
-    loginForm.addEventListener('submit', async (e) => {
+    function showError(msg) {
+      errorMsg.textContent = msg;
+      errorAlert.classList.add('visible');
+      successAlert.classList.remove('visible');
+    }
+
+    function showSuccess(msg) {
+      successMsg.textContent = msg;
+      successAlert.classList.add('visible');
+      errorAlert.classList.remove('visible');
+    }
+
+    function setLoading(loading) {
+      submitBtn.classList.toggle('loading', loading);
+      btnArrow.style.display = loading ? 'none' : 'block';
+      btnLabel.textContent = loading
+        ? (currentLang === 'ar' ? 'جاري تسجيل الدخول...' : 'Signing in...')
+        : (translations[currentLang]?.authBtnLogin || 'Sign In');
+      if (loading) {
+        const spinner = document.createElement('div');
+        spinner.className = 'btn-spinner';
+        spinner.id = 'btn-spinner';
+        submitBtn.appendChild(spinner);
+      } else {
+        document.getElementById('btn-spinner')?.remove();
+      }
+    }
+
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      errorAlert.style.display = 'none';
-      successAlert.style.display = 'none';
+      errorAlert.classList.remove('visible');
+      successAlert.classList.remove('visible');
 
-      const email = document.getElementById('email').value;
+      const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       const rememberMe = document.getElementById('rememberMe').checked;
+
+      if (!email || !password) {
+        showError(currentLang === 'ar' ? 'يرجى إدخال البريد الإلكتروني وكلمة المرور.' : 'Please enter your email and password.');
+        return;
+      }
+
+      setLoading(true);
 
       try {
         const response = await fetch('/api/auth/login', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password, rememberMe })
         });
 
         const data = await response.json();
 
-        if (!response.ok) {
-          throw new Error(data.error || 'Login failed');
-        }
+        if (!response.ok) throw new Error(data.error || 'Login failed');
 
-        // Show Success
-        successAlert.textContent = currentLang === 'ar' ? 'تم تسجيل الدخول بنجاح! جاري التوجيه...' : 'Login successful! Redirecting...';
-        successAlert.style.display = 'block';
-
-        // Redirect based on server instructions (RBAC target)
-        setTimeout(() => {
-          window.location.href = data.redirectUrl;
-        }, 1000);
-
+        showSuccess(currentLang === 'ar' ? 'تم تسجيل الدخول بنجاح! جاري التوجيه...' : 'Login successful! Redirecting...');
+        setTimeout(() => { window.location.href = data.redirectUrl; }, 1200);
       } catch (err) {
-        errorAlert.textContent = err.message;
-        errorAlert.style.display = 'block';
+        setLoading(false);
+        showError(err.message);
       }
     });
   </script>

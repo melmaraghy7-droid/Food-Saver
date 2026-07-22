@@ -43,5 +43,23 @@
     "role": "Bakery",
     "passwordHash": "$2a$10$l..Ytnjb/ai8.E3zQXlO3O9045zEwI/UGSJhHuosqDZbGVVI3OkuK",
     "createdAt": "2026-07-18T15:03:30.169Z"
+  },
+  {
+    "id": "usr_e29uu77qa",
+    "fullName": "Max",
+    "email": "charity@gmail.com",
+    "mobileNumber": "12345665432",
+    "role": "Charity",
+    "passwordHash": "$2a$10$TwuEIaGk6ciM5kC4vqk0runuHq4FRXamiCDyDO6JjX2GqFo3MAbKC",
+    "createdAt": "2026-07-18T16:22:42.843Z"
+  },
+  {
+    "id": "usr_8ne504de5",
+    "fullName": "Malak",
+    "email": "melmaraghy7@gmail.com",
+    "mobileNumber": "12345665432",
+    "role": "Volunteer",
+    "passwordHash": "$2a$10$XRt5KRiujNfLjkh0tR1HF.rHUDYJqjhyVDmVU3fENPBbHLXFZ6dv2",
+    "createdAt": "2026-07-18T16:37:11.635Z"
   }
 ]
