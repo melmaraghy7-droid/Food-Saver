@@ -2,6 +2,10 @@ import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -9,59 +13,88 @@ const __dirname = path.dirname(__filename);
 const dbDir = path.join(__dirname, '../data');
 const dbPath = path.join(dbDir, 'users.json');
 
-// Ensure database file and directory exist
-async function ensureDbExists() {
+// --- Supabase Client Initialization ---
+const supabaseUrl = process.env.SUPABASE_URL || 'https://qsomdileoramnmlhjxfd.supabase.co';
+const supabaseKey = process.env.SUPABASE_KEY || 'sb_publishable_PtdvOnuksr7Wi-6jPgEpDw_qbp_5Swq';
+
+export const supabase = createClient(supabaseUrl, supabaseKey);
+
+console.log('🔗 Connected to Supabase Cloud Database at:', supabaseUrl);
+
+// --- Local JSON Storage Fallback Helpers ---
+async function ensureDbExists(filePath, defaultData = []) {
   try {
     await fs.mkdir(dbDir, { recursive: true });
-    await fs.access(dbPath);
-  } catch (error) {
-    // If directory or file does not exist, create it with empty array
-    await fs.writeFile(dbPath, JSON.stringify([], null, 2), 'utf-8');
+    await fs.access(filePath);
+  } catch {
+    await fs.writeFile(filePath, JSON.stringify(defaultData, null, 2), 'utf-8');
   }
 }
 
-// Read all users
-export async function getUsers() {
-  await ensureDbExists();
+async function readLocalJson(filePath) {
   try {
-    const data = await fs.readFile(dbPath, 'utf-8');
+    await ensureDbExists(filePath);
+    const data = await fs.readFile(filePath, 'utf-8');
     return JSON.parse(data);
-  } catch (error) {
-    console.error('Error reading database file, resetting to empty array:', error);
+  } catch {
     return [];
   }
 }
 
-// Save all users
-export async function saveUsers(users) {
-  await ensureDbExists();
-  await fs.writeFile(dbPath, JSON.stringify(users, null, 2), 'utf-8');
+async function writeLocalJson(filePath, data) {
+  await ensureDbExists(filePath);
+  await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8');
 }
 
-// Find user by email
+// ----------------------------------------------------
+// USERS STORAGE
+// ----------------------------------------------------
+export async function getUsers() {
+  try {
+    const { data, error } = await supabase.from('users').select('*');
+    if (!error && Array.isArray(data)) {
+      return data;
+    }
+  } catch (err) {
+    console.warn('Supabase query failed, falling back to local users database:', err.message);
+  }
+  return readLocalJson(dbPath);
+}
+
+export async function saveUsers(users) {
+  await writeLocalJson(dbPath, users);
+  try {
+    if (Array.isArray(users) && users.length > 0) {
+      await supabase.from('users').upsert(users, { onConflict: 'id' });
+    }
+  } catch (err) {
+    console.warn('Supabase sync warning (users):', err.message);
+  }
+}
+
 export async function getUserByEmail(email) {
   if (!email) return null;
-  const users = await getUsers();
   const searchEmail = email.trim().toLowerCase();
   
-  // Special check for hardcoded Admin account
   if (searchEmail === 'admin@foodwaste.com') {
-    // Return mock admin user representation (password check handled separately or matches hashed admin password)
-    // admin@123 hashed is: $2a$10$wzQv8dFq5z1v0yA3cWv6QO0W4E5Wc7r8n0Z4C9Y3l1h8v1C2M3c5e (we can generate one or just hardcode checking)
     return {
       id: 'admin-id-001',
       fullName: 'System Administrator',
       email: 'admin@foodwaste.com',
       role: 'Admin',
-      // admin@123 hashed
       passwordHash: '$2a$10$gO0Ww6sFjFm6GkHqL2QcOepx.sD9x7a6M7X.5pYnreYx8G9L9Y1pG' 
     };
   }
 
+  try {
+    const { data, error } = await supabase.from('users').select('*').eq('email', searchEmail).maybeSingle();
+    if (!error && data) return data;
+  } catch {}
+
+  const users = await getUsers();
   return users.find(u => u.email.toLowerCase() === searchEmail) || null;
 }
 
-// Find user by ID
 export async function getUserById(id) {
   if (id === 'admin-id-001') {
     return {
@@ -71,26 +104,26 @@ export async function getUserById(id) {
       role: 'Admin'
     };
   }
+
+  try {
+    const { data, error } = await supabase.from('users').select('*').eq('id', id).maybeSingle();
+    if (!error && data) return data;
+  } catch {}
+
   const users = await getUsers();
   return users.find(u => u.id === id) || null;
 }
 
-// Create new user (with password hashing)
 export async function createUser(userData) {
-  const users = await getUsers();
-  
-  // Validation checks
   const existingUser = await getUserByEmail(userData.email);
   if (existingUser) {
     throw new Error('Email address already registered.');
   }
 
-  // Prevent registration as Admin
   if (userData.role && userData.role.toLowerCase() === 'admin') {
     throw new Error('Admin registration is not allowed.');
   }
 
-  // Hash password
   const salt = await bcrypt.genSalt(10);
   const passwordHash = await bcrypt.hash(userData.password, salt);
 
@@ -99,124 +132,127 @@ export async function createUser(userData) {
     fullName: userData.fullName.trim(),
     email: userData.email.trim().toLowerCase(),
     mobileNumber: userData.mobileNumber.trim(),
-    role: userData.role, // Restaurant, Supermarket, Bakery, Charity, Volunteer
+    role: userData.role,
     passwordHash,
     createdAt: new Date().toISOString()
   };
 
+  const users = await getUsers();
   users.push(newUser);
   await saveUsers(users);
 
-  // Return user without password hash for safety
   const { passwordHash: _, ...userWithoutPassword } = newUser;
   return userWithoutPassword;
 }
 
 // ----------------------------------------------------
-// DONATIONS STORAGE MAPPINGS
+// DONATIONS STORAGE
 // ----------------------------------------------------
 const donationsPath = path.join(dbDir, 'donations.json');
-async function ensureDonationsDb() {
-  try {
-    await fs.access(donationsPath);
-  } catch {
-    await fs.writeFile(donationsPath, JSON.stringify([], null, 2), 'utf-8');
-  }
-}
 
 export async function getDonations() {
-  await ensureDonationsDb();
   try {
-    const data = await fs.readFile(donationsPath, 'utf-8');
-    return JSON.parse(data);
-  } catch {
-    return [];
+    const { data, error } = await supabase.from('donations').select('*');
+    if (!error && Array.isArray(data)) {
+      return data;
+    }
+  } catch (err) {
+    console.warn('Supabase query failed, falling back to local donations database:', err.message);
   }
+  return readLocalJson(donationsPath);
 }
 
 export async function saveDonations(donations) {
-  await ensureDonationsDb();
-  await fs.writeFile(donationsPath, JSON.stringify(donations, null, 2), 'utf-8');
+  await writeLocalJson(donationsPath, donations);
+  try {
+    if (Array.isArray(donations) && donations.length > 0) {
+      await supabase.from('donations').upsert(donations, { onConflict: 'id' });
+    }
+  } catch (err) {
+    console.warn('Supabase sync warning (donations):', err.message);
+  }
 }
 
 // ----------------------------------------------------
-// CHAT MESSAGES STORAGE MAPPINGS
+// CHAT MESSAGES STORAGE
 // ----------------------------------------------------
 const messagesPath = path.join(dbDir, 'messages.json');
-async function ensureMessagesDb() {
-  try {
-    await fs.access(messagesPath);
-  } catch {
-    await fs.writeFile(messagesPath, JSON.stringify([], null, 2), 'utf-8');
-  }
-}
 
 export async function getMessages() {
-  await ensureMessagesDb();
   try {
-    const data = await fs.readFile(messagesPath, 'utf-8');
-    return JSON.parse(data);
-  } catch {
-    return [];
+    const { data, error } = await supabase.from('messages').select('*');
+    if (!error && Array.isArray(data)) {
+      return data;
+    }
+  } catch (err) {
+    console.warn('Supabase query failed, falling back to local messages database:', err.message);
   }
+  return readLocalJson(messagesPath);
 }
 
 export async function saveMessages(messages) {
-  await ensureMessagesDb();
-  await fs.writeFile(messagesPath, JSON.stringify(messages, null, 2), 'utf-8');
+  await writeLocalJson(messagesPath, messages);
+  try {
+    if (Array.isArray(messages) && messages.length > 0) {
+      await supabase.from('messages').upsert(messages, { onConflict: 'id' });
+    }
+  } catch (err) {
+    console.warn('Supabase sync warning (messages):', err.message);
+  }
 }
 
 // ----------------------------------------------------
-// SYSTEM NOTIFICATIONS STORAGE MAPPINGS
+// SYSTEM NOTIFICATIONS STORAGE
 // ----------------------------------------------------
 const notificationsPath = path.join(dbDir, 'notifications.json');
-async function ensureNotificationsDb() {
-  try {
-    await fs.access(notificationsPath);
-  } catch {
-    await fs.writeFile(notificationsPath, JSON.stringify([], null, 2), 'utf-8');
-  }
-}
 
 export async function getNotifications() {
-  await ensureNotificationsDb();
   try {
-    const data = await fs.readFile(notificationsPath, 'utf-8');
-    return JSON.parse(data);
-  } catch {
-    return [];
+    const { data, error } = await supabase.from('notifications').select('*');
+    if (!error && Array.isArray(data)) {
+      return data;
+    }
+  } catch (err) {
+    console.warn('Supabase query failed, falling back to local notifications database:', err.message);
   }
+  return readLocalJson(notificationsPath);
 }
 
 export async function saveNotifications(notifications) {
-  await ensureNotificationsDb();
-  await fs.writeFile(notificationsPath, JSON.stringify(notifications, null, 2), 'utf-8');
+  await writeLocalJson(notificationsPath, notifications);
+  try {
+    if (Array.isArray(notifications) && notifications.length > 0) {
+      await supabase.from('notifications').upsert(notifications, { onConflict: 'id' });
+    }
+  } catch (err) {
+    console.warn('Supabase sync warning (notifications):', err.message);
+  }
 }
 
 // ----------------------------------------------------
-// COMPLAINTS & REPORTS STORAGE MAPPINGS
+// COMPLAINTS & REPORTS STORAGE
 // ----------------------------------------------------
 const reportsPath = path.join(dbDir, 'reports.json');
-async function ensureReportsDb() {
-  try {
-    await fs.access(reportsPath);
-  } catch {
-    await fs.writeFile(reportsPath, JSON.stringify([], null, 2), 'utf-8');
-  }
-}
 
 export async function getReports() {
-  await ensureReportsDb();
   try {
-    const data = await fs.readFile(reportsPath, 'utf-8');
-    return JSON.parse(data);
-  } catch {
-    return [];
+    const { data, error } = await supabase.from('reports').select('*');
+    if (!error && Array.isArray(data)) {
+      return data;
+    }
+  } catch (err) {
+    console.warn('Supabase query failed, falling back to local reports database:', err.message);
   }
+  return readLocalJson(reportsPath);
 }
 
 export async function saveReports(reports) {
-  await ensureReportsDb();
-  await fs.writeFile(reportsPath, JSON.stringify(reports, null, 2), 'utf-8');
+  await writeLocalJson(reportsPath, reports);
+  try {
+    if (Array.isArray(reports) && reports.length > 0) {
+      await supabase.from('reports').upsert(reports, { onConflict: 'id' });
+    }
+  } catch (err) {
+    console.warn('Supabase sync warning (reports):', err.message);
+  }
 }
-

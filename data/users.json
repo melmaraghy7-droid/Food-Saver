@@ -61,5 +61,14 @@
     "role": "Volunteer",
     "passwordHash": "$2a$10$XRt5KRiujNfLjkh0tR1HF.rHUDYJqjhyVDmVU3fENPBbHLXFZ6dv2",
     "createdAt": "2026-07-18T16:37:11.635Z"
+  },
+  {
+    "id": "usr_yyxbigktf",
+    "fullName": "Carlos Diaz",
+    "email": "volunteer_ct8kt@test.com",
+    "mobileNumber": "051234567",
+    "role": "Volunteer",
+    "passwordHash": "$2a$10$icVw3HMasdMY4o3M7sk2AOqx41uT.M3nhvv4V7Z8FESH.sDM5OBL2",
+    "createdAt": "2026-07-23T00:01:18.156Z"
   }
 ]

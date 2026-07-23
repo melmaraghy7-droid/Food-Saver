@@ -3,6 +3,9 @@ import cookieParser from 'cookie-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 import { getUserByEmail, createUser, getDonations, saveDonations, getMessages, saveMessages, getNotifications, saveNotifications, getReports, saveReports, getUsers, saveUsers } from './models/db.js';
 import { authenticateToken, requireAuth, requireRole, generateToken } from './middleware/auth.js';
